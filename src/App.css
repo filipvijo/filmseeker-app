@@ -1,38 +1,382 @@
 .App {
   text-align: center;
-}
-
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
+  padding: 50px; /* Original padding for desktop */
+  font-family: 'Montserrat', sans-serif;
+  background-image: url('./tech-background.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
+  color: #ffffff;
+  position: relative;
+  overflow-x: hidden;
+}
+
+.App::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to bottom, rgba(30, 58, 138, 0.6), rgba(75, 85, 99, 0.6));
+  z-index: 1;
+}
+
+.App > * {
+  position: relative;
+  z-index: 2;
+}
+
+.logo {
+  width: 250px; /* Original size for desktop */
+  height: auto;
+  margin-bottom: 20px;
+  filter: drop-shadow(0 0 10px rgba(147, 197, 253, 0.7));
+  transition: transform 0.3s;
+}
+
+.logo:hover {
+  transform: scale(1.05);
+}
+
+h1 {
+  color: #ffffff;
+  font-size: 2em; /* Original size for desktop */
+  margin-bottom: 40px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.input-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* 3 columns for desktop */
+  gap: 20px; /* Original gap */
+  background: rgba(31, 41, 55, 0.4);
+  backdrop-filter: blur(10px);
+  padding: 30px; /* Original padding */
+  border-radius: 15px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  width: 80%; /* Original width */
+  max-width: 900px;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px; /* Original padding */
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.input-group:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 10px rgba(147, 197, 253, 0.5);
+}
+
+.button-group {
+  display: flex;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  align-items: center;
+  padding: 10px;
 }
 
-.App-link {
-  color: #61dafb;
+.input-group img {
+  width: 50px; /* Original size for desktop */
+  height: 50px;
+  margin-bottom: 10px;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
+label {
+  font-size: 1.2em; /* Original size for desktop */
+  color: #e5e7eb;
+  margin-bottom: 8px;
+}
+
+input, select {
+  padding: 10px; /* Original padding */
+  font-size: 1em; /* Original size */
+  border: 2px solid rgba(255, 255, 253, 0.2);
+  border-radius: 6px;
+  width: 100%;
+  max-width: 200px; /* Original max-width */
+  box-sizing: border-box;
+  background-color: rgba(75, 85, 99, 0.5);
+  color: #ffffff;
+  transition: border-color 0.3s;
+}
+
+input:focus, select:focus {
+  border-color: #93c5fd;
+  outline: none;
+}
+
+button {
+  padding: 12px 30px; /* Original size */
+  font-size: 1.3em; /* Original size */
+  background: linear-gradient(90deg, #93c5fd, #60a5fa);
+  color: #1f2937;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(147, 197, 253, 0.4);
+  transition: all 0.3s ease;
+}
+
+button:hover {
+  background: linear-gradient(90deg, #60a5fa, #3b82f6);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(147, 197, 253, 0.6);
+}
+
+.recommendation {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 20px; /* Original gap */
+  flex-wrap: wrap;
+}
+
+.recommendation-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.recommendation-item:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 12px rgba(147, 197, 253, 0.6);
+}
+
+.poster {
+  width: 150px; /* Original size for desktop */
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  margin: 0;
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 10px;
+}
+
+.modal-content {
+  background: rgba(31, 41, 55, 0.9);
+  padding: 30px; /* Original padding for desktop */
+  border-radius: 15px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  overflow-y: auto;
+  color: #ffffff;
+  position: relative;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+
+.modal-content h2 {
+  font-size: 1.8em; /* Original size for desktop */
+  margin-bottom: 10px;
+  color: #93c5fd;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.modal-content .rating {
+  font-size: 1.2em;
+  margin-bottom: 15px;
+  color: #e5e7eb;
+  font-style: italic;
+}
+
+.modal-content .overview {
+  font-size: 1.1em;
+  line-height: 1.6;
+  color: #d1d5db;
+  margin-bottom: 20px;
+}
+
+.close-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 28px;
+  background: none;
+  border: none;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.trailer-button {
+  padding: 10px 20px; /* Original size */
+  font-size: 1em;
+  background: linear-gradient(90deg, #93c5fd, #60a5fa);
+  color: #1f2937;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.trailer-button:hover {
+  background: linear-gradient(90deg, #60a5fa, #3b82f6);
+  transform: translateY(-2px);
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .App {
+    padding: 10px;
   }
-  to {
-    transform: rotate(360deg);
+
+  .logo {
+    width: 120px;
+  }
+
+  h1 {
+    font-size: 1em;
+    margin-bottom: 10px;
+  }
+
+  .input-container {
+    grid-template-columns: 1fr; /* Single column on mobile */
+    gap: 8px;
+    padding: 10px;
+    width: 90%;
+    max-height: 60vh; /* Enable scrolling on mobile */
+    overflow-y: auto;
+  }
+
+  .input-group {
+    padding: 3px;
+  }
+
+  .input-group img {
+    width: 30px;
+    height: 30px;
+    margin-bottom: 3px;
+  }
+
+  label {
+    font-size: 0.85em;
+    margin-bottom: 3px;
+  }
+
+  input, select {
+    padding: 6px;
+    font-size: 0.8em;
+    max-width: 100%;
+  }
+
+  button {
+    padding: 6px 18px;
+    font-size: 0.9em;
+  }
+
+  .recommendation {
+    gap: 8px;
+    margin-top: 15px;
+  }
+
+  .poster {
+    width: 80px;
+  }
+
+  .modal-content {
+    padding: 10px;
+    width: 90%;
+    max-height: 65vh;
+  }
+
+  .modal-content h2 {
+    font-size: 1.1em;
+  }
+
+  .modal-content .rating {
+    font-size: 0.8em;
+  }
+
+  .modal-content .overview {
+    font-size: 0.75em;
+  }
+
+  .trailer-button {
+    padding: 6px 12px;
+    font-size: 0.8em;
+  }
+}
+
+@media (max-width: 480px) {
+  .logo {
+    width: 100px;
+  }
+
+  h1 {
+    font-size: 0.9em;
+  }
+
+  .input-container {
+    padding: 8px;
+    max-height: 55vh;
+  }
+
+  .input-group img {
+    width: 25px;
+    height: 25px;
+  }
+
+  label {
+    font-size: 0.8em;
+  }
+
+  input, select {
+    padding: 5px;
+    font-size: 0.75em;
+  }
+
+  button {
+    padding: 5px 15px;
+    font-size: 0.85em;
+  }
+
+  .poster {
+    width: 70px;
+  }
+
+  .modal-content {
+    padding: 8px;
+    max-height: 60vh;
+  }
+
+  .modal-content h2 {
+    font-size: 1em;
+  }
+
+  .modal-content .rating {
+    font-size: 0.75em;
+  }
+
+  .modal-content .overview {
+    font-size: 0.7em;
+  }
+
+  .trailer-button {
+    padding: 5px 10px;
+    font-size: 0.75em;
   }
 }
