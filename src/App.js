@@ -4,14 +4,14 @@ import axios from 'axios';
 import logo from './logo.png';
 import iconGenre from './icon-genre.png';
 import iconMood from './icon-mood.png';
-import iconLength from './icon-length.png'; // This icon will now represent decade
+import iconLength from './icon-length.png';
 import iconLanguage from './icon-language.png';
 import iconActor from './icon-actor.png';
 
 function App() {
   const [genre, setGenre] = useState('');
-  const [mood, setMood] = useState('');
-  const [decade, setDecade] = useState(''); // Changed from length to decade
+  const [duration, setDuration] = useState('');
+  const [decade, setDecade] = useState('');
   const [language, setLanguage] = useState('');
   const [actor, setActor] = useState('');
   const [recommendations, setRecommendations] = useState([]);
@@ -19,8 +19,30 @@ function App() {
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [movieDetails, setMovieDetails] = useState(null);
 
-  const API_KEY = process.env.REACT_APP_TMDB_API_KEY; // Replace with your TMDb API Key or Read Access Token
+  const API_KEY = process.env.REACT_APP_TMDB_API_KEY;
 
+  // Language map for converting language names to ISO 639-1 codes
+  const languageMap = {
+    '': '', // For "Any language"
+    'english': 'en',
+    'french': 'fr',
+    'spanish': 'es',
+    'german': 'de',
+    'korean': 'ko',
+    'japanese': 'ja',
+    'arabic': 'ar',
+    'farsi': 'fa',
+    'russian': 'ru',
+    'serbian': 'sr',
+    'chinese': 'zh',
+    'thai': 'th',
+    'danish': 'da',
+    'swedish': 'sv',
+    'norwegian': 'no',
+    'italian': 'it',
+  };
+
+  // Fetch genres
   useEffect(() => {
     const fetchGenres = async () => {
       try {
@@ -33,33 +55,33 @@ function App() {
     fetchGenres();
   }, [API_KEY]);
 
+  // Load saved preferences from localStorage
   useEffect(() => {
     const savedGenre = localStorage.getItem('genre');
-    const savedMood = localStorage.getItem('mood');
-    const savedDecade = localStorage.getItem('decade'); // Changed from length to decade
+    const savedDuration = localStorage.getItem('duration');
+    const savedDecade = localStorage.getItem('decade');
     const savedLanguage = localStorage.getItem('language');
     const savedActor = localStorage.getItem('actor');
     if (savedGenre) setGenre(savedGenre);
-    if (savedMood) setMood(savedMood);
+    if (savedDuration) setDuration(savedDuration);
     if (savedDecade) setDecade(savedDecade);
     if (savedLanguage) setLanguage(savedLanguage);
     if (savedActor) setActor(savedActor);
   }, []);
 
+  // Save preferences to localStorage
   useEffect(() => {
     localStorage.setItem('genre', genre);
-    localStorage.setItem('mood', mood);
-    localStorage.setItem('decade', decade); // Changed from length to decade
+    localStorage.setItem('duration', duration);
+    localStorage.setItem('decade', decade);
     localStorage.setItem('language', language);
     localStorage.setItem('actor', actor);
-  }, [genre, mood, decade, language, actor]);
+  }, [genre, duration, decade, language, actor]);
 
   const getRecommendations = async () => {
     try {
       const genreId = genres.find(g => g.name.toLowerCase() === genre.toLowerCase())?.id || '';
-      // Map decade to release date range
       const decadeFilter = decade ? `&primary_release_date.gte=${decade}-01-01&primary_release_date.lte=${parseInt(decade) + 9}-12-31` : '';
-      const languageMap = { 'english': 'en', 'french': 'fr', 'spanish': 'es', 'german': 'de' };
       const languageFilter = language ? `&with_original_language=${languageMap[language.toLowerCase()] || language.toLowerCase()}` : '';
       let actorId = '';
       if (actor) {
@@ -67,18 +89,19 @@ function App() {
         actorId = actorResponse.data.results[0]?.id || '';
       }
       const actorFilter = actorId ? `&with_cast=${actorId}` : '';
-      const moodFilter = {
-        'happy': '&with_genres=35&vote_average.gte=6', // Comedy, high rating
-        'sad': '&with_genres=18', // Drama
-        'excited': '&with_genres=28&vote_average.gte=6', // Action, high rating
-      }[mood.toLowerCase()] || '';
+      const durationFilter = {
+        'short': '&runtime.lte=90',
+        'medium': '&runtime.gte=90&runtime.lte=120',
+        'long': '&runtime.gte=120',
+      }[duration.toLowerCase()] || '';
 
-      const query = `https://api.themoviedb.org/3/discover/movie?api_key=${API_KEY}${genreId ? `&with_genres=${genreId}` : ''}${decadeFilter}${languageFilter}${actorFilter}${moodFilter}&sort_by=popularity.desc`;
+      const query = `https://api.themoviedb.org/3/discover/movie?api_key=${API_KEY}${genreId ? `&with_genres=${genreId}` : ''}${decadeFilter}${languageFilter}${actorFilter}${durationFilter}&sort_by=popularity.desc`;
       const response = await axios.get(query);
-      const results = response.data.results.slice(0, 5);
+      const results = response.data.results.slice(0, 10);
       setRecommendations(results.map(movie => ({
         id: movie.id,
         Poster: movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : null,
+        Title: movie.title,
       })));
     } catch (error) {
       console.error('Error fetching recommendations:', error);
@@ -126,13 +149,13 @@ function App() {
           </select>
         </div>
         <div className="input-group">
-          <img src={iconMood} alt="Mood Icon" />
-          <label>Choose Your Mood!</label>
-          <select value={mood} onChange={(e) => setMood(e.target.value)}>
-            <option value="">Choose a mood</option>
-            <option value="happy">Happy</option>
-            <option value="sad">Sad</option>
-            <option value="excited">Excited</option>
+          <img src={iconMood} alt="Duration Icon" />
+          <label>Film Duration</label>
+          <select value={duration} onChange={(e) => setDuration(e.target.value)}>
+            <option value="">Any duration</option>
+            <option value="short">Short (&lt;90 min)</option> {/* Escaped < */}
+            <option value="medium">Medium (90-120 min)</option>
+            <option value="long">Long (&gt;120 min)</option> {/* Escaped > */}
           </select>
         </div>
         <div className="input-group">
@@ -155,32 +178,48 @@ function App() {
           <label>Preferred Language</label>
           <select value={language} onChange={(e) => setLanguage(e.target.value)}>
             <option value="">Any language</option>
-            {Object.keys({ 'english': 'en', 'french': 'fr', 'spanish': 'es', 'german': 'de' }).map(lang => (
+            {Object.keys(languageMap).filter(lang => lang !== '').map(lang => (
               <option key={lang} value={lang}>{lang.charAt(0).toUpperCase() + lang.slice(1)}</option>
             ))}
           </select>
         </div>
         <div className="input-group">
           <img src={iconActor} alt="Actor Icon" />
-          <label>Favorite Actor/Actress</label>
-          <input value={actor} onChange={(e) => setActor(e.target.value)} />
+          <label>Favorite Actor</label>
+          <input
+            value={actor}
+            onChange={(e) => setActor(e.target.value)}
+            placeholder="Enter Actor"
+          />
         </div>
         <div className="input-group button-group">
           <button onClick={getRecommendations}>Get My Film!</button>
         </div>
       </div>
+
+      {/* Recommendations Section */}
       <div className="recommendation">
         {recommendations.map((rec, index) => (
-          <div key={index} className="recommendation-item" onClick={() => fetchMovieDetails(rec.id)}>
-            {rec.Poster && <img src={rec.Poster} alt={`Movie Poster ${index + 1}`} className="poster" />}
+          <div key={index} className="recommendation-item">
+            {rec.Poster && (
+              <img src={rec.Poster} alt={`Movie Poster ${index + 1}`} className="poster" onClick={() => fetchMovieDetails(rec.id)} />
+            )}
           </div>
         ))}
       </div>
 
+      {/* Modal for Movie Details */}
       {selectedMovie && movieDetails && (
         <div className="modal" onClick={closeModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <button className="close-button" onClick={closeModal}>×</button>
+            {movieDetails.poster_path && (
+              <img
+                src={`https://image.tmdb.org/t/p/w500${movieDetails.poster_path}`}
+                alt={`${movieDetails.title} Poster`}
+                className="modal-poster"
+              />
+            )}
             <h2>{movieDetails.title} ({movieDetails.release_date.split('-')[0]})</h2>
             <p className="rating">Rating: {movieDetails.vote_average}/10</p>
             <p className="overview">{movieDetails.overview}</p>
