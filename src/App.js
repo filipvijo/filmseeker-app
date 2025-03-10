@@ -90,23 +90,66 @@ function App() {
       }
       const actorFilter = actorId ? `&with_cast=${actorId}` : '';
       const durationFilter = {
-        'short': '&runtime.lte=90',
-        'medium': '&runtime.gte=90&runtime.lte=120',
-        'long': '&runtime.gte=120',
+        'short': '&with_runtime.lte=90',
+        'medium': '&with_runtime.gte=90&with_runtime.lte=120',
+        'long': '&with_runtime.gte=120',
       }[duration.toLowerCase()] || '';
-
-      const query = `https://api.themoviedb.org/3/discover/movie?api_key=${API_KEY}${genreId ? `&with_genres=${genreId}` : ''}${decadeFilter}${languageFilter}${actorFilter}${durationFilter}&sort_by=popularity.desc`;
-      const response = await axios.get(query);
-      const results = response.data.results.slice(0, 10);
-      setRecommendations(results.map(movie => ({
-        id: movie.id,
-        Poster: movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : null,
-        Title: movie.title,
+  
+      // Fetch multiple pages to get more movies
+      let allResults = [];
+      for (let page = 1; page <= 3; page++) {
+        const query = `https://api.themoviedb.org/3/discover/movie?api_key=${API_KEY}${genreId ? `&with_genres=${genreId}` : ''}${decadeFilter}${languageFilter}${actorFilter}${durationFilter}&sort_by=popularity.desc&page=${page}`;
+        console.log('API Query (Page', page, '):', query);
+  
+        const response = await axios.get(query);
+        const results = response.data.results;
+        allResults = [...allResults, ...results];
+      }
+  
+      // Fetch runtime for each movie
+      const moviesWithRuntime = await Promise.all(
+        allResults.map(async (movie) => {
+          const detailsResponse = await axios.get(`https://api.themoviedb.org/3/movie/${movie.id}?api_key=${API_KEY}`);
+          return {
+            ...movie,
+            runtime: detailsResponse.data.runtime || 0,
+          };
+        })
+      );
+  
+      console.log('All Fetched Movies with Runtimes:', moviesWithRuntime.map(movie => ({
+        title: movie.title,
+        runtime: movie.runtime,
       })));
+  
+      // Client-side filtering for duration
+      const filteredResults = moviesWithRuntime.filter(movie => {
+        const runtime = movie.runtime || 0;
+        if (duration.toLowerCase() === 'short') return runtime > 0 && runtime <= 90;
+        if (duration.toLowerCase() === 'medium') return runtime >= 90 && runtime <= 120;
+        if (duration.toLowerCase() === 'long') return runtime >= 120;
+        return true; // If no duration selected, include all
+      }).slice(0, 10);
+  
+      console.log('Filtered Movies:', filteredResults.map(movie => ({
+        title: movie.title,
+        runtime: movie.runtime,
+      })));
+  
+      if (filteredResults.length === 0) {
+        setRecommendations([{ id: null, Poster: null, Title: 'No movies found matching your duration criteria.' }]);
+      } else {
+        setRecommendations(filteredResults.map(movie => ({
+          id: movie.id,
+          Poster: movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : null,
+          Title: movie.title,
+        })));
+      }
     } catch (error) {
       console.error('Error fetching recommendations:', error);
       setRecommendations([{ id: null, Poster: null, Title: 'Error loading recommendations' }]);
     }
+
   };
 
   const fetchMovieDetails = async (movieId) => {
@@ -215,7 +258,7 @@ function App() {
             <button className="close-button" onClick={closeModal}>×</button>
             {movieDetails.poster_path && (
               <img
-                src={`https://image.tmdb.org/t/p/w500${movieDetails.poster_path}`}
+                src={`https://image.tmdb.org/t/p/w200${movieDetails.poster_path}`}
                 alt={`${movieDetails.title} Poster`}
                 className="modal-poster"
               />
