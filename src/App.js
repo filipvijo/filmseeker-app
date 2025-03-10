@@ -247,7 +247,28 @@ function App() {
   return (
     <div className="App">
       <img src={logo} alt="FilmSeeker Logo" className="logo" />
-      <h1>Choose a Category</h1>
+      {trendingFilms.length > 0 && (
+        <div className="trending-section">
+          <h2>Top 3 Trending Films This Week</h2>
+          <div className="trending-recommendation">
+            {trendingFilms.map((film, index) => (
+              <div key={index} className="recommendation-item">
+                {film.Poster ? (
+                  <img
+                    src={film.Poster}
+                    alt={`Trending Movie Poster ${index + 1}`}
+                    className="trending-poster"
+                    onClick={() => fetchMovieDetails(film.id)}
+                  />
+                ) : (
+                  <p>{film.Title}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      <h1>Add your Preferences</h1>
       <div className="input-container">
         <div className="input-group">
           <img src={iconGenre} alt="Genre Icon" />
@@ -344,28 +365,6 @@ function App() {
           <p>No recommendations yet. Select your preferences and click "Get My Film!"</p>
         )}
       </div>
-
-      {trendingFilms.length > 0 && (
-        <div className="trending-section">
-          <h2>Top 3 Trending Films Weekly</h2>
-          <div className="trending-recommendation">
-            {trendingFilms.map((film, index) => (
-              <div key={index} className="recommendation-item">
-                {film.Poster ? (
-                  <img
-                    src={film.Poster}
-                    alt={`Trending Movie Poster ${index + 1}`}
-                    className="trending-poster"
-                    onClick={() => fetchMovieDetails(film.id)}
-                  />
-                ) : (
-                  <p>{film.Title}</p>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {selectedMovie && movieDetails && (
         <div className="modal" onClick={closeModal}>
