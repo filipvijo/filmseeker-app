@@ -7,6 +7,7 @@ import iconMood from './icon-mood.png';
 import iconLength from './icon-length.png';
 import iconLanguage from './icon-language.png';
 import iconActor from './icon-actor.png';
+import iconDirector from './icon-director.png';
 
 function App() {
   const [genre, setGenre] = useState('');
@@ -14,16 +15,18 @@ function App() {
   const [decade, setDecade] = useState('');
   const [language, setLanguage] = useState('');
   const [actor, setActor] = useState('');
+  const [director, setDirector] = useState('');
   const [recommendations, setRecommendations] = useState([]);
+  const [trendingFilms, setTrendingFilms] = useState([]);
   const [genres, setGenres] = useState([]);
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [movieDetails, setMovieDetails] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const API_KEY = process.env.REACT_APP_TMDB_API_KEY;
 
-  // Language map for converting language names to ISO 639-1 codes
   const languageMap = {
-    '': '', // For "Any language"
+    '': '',
     'english': 'en',
     'french': 'fr',
     'spanish': 'es',
@@ -42,8 +45,35 @@ function App() {
     'italian': 'it',
   };
 
-  // Fetch genres
+  // Fetch trending films on page load
   useEffect(() => {
+    const fetchTrendingFilms = async () => {
+      try {
+        const response = await axios.get(`https://api.themoviedb.org/3/trending/movie/week?api_key=${API_KEY}`);
+        const trending = response.data.results
+          .slice(0, 3) // Take top 3
+          .map(movie => ({
+            id: movie.id,
+            Poster: movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : null,
+            Title: movie.title,
+          }));
+        setTrendingFilms(trending);
+      } catch (error) {
+        console.error('Error fetching trending films:', error);
+      }
+    };
+    fetchTrendingFilms();
+
+    // Clear all preferences on page load
+    localStorage.clear();
+    setGenre('');
+    setDuration('');
+    setDecade('');
+    setLanguage('');
+    setActor('');
+    setDirector('');
+
+    // Fetch genres from TMDB
     const fetchGenres = async () => {
       try {
         const response = await axios.get(`https://api.themoviedb.org/3/genre/movie/list?api_key=${API_KEY}`);
@@ -55,89 +85,124 @@ function App() {
     fetchGenres();
   }, [API_KEY]);
 
-  // Load saved preferences from localStorage
   useEffect(() => {
-    const savedGenre = localStorage.getItem('genre');
-    const savedDuration = localStorage.getItem('duration');
-    const savedDecade = localStorage.getItem('decade');
-    const savedLanguage = localStorage.getItem('language');
-    const savedActor = localStorage.getItem('actor');
-    if (savedGenre) setGenre(savedGenre);
-    if (savedDuration) setDuration(savedDuration);
-    if (savedDecade) setDecade(savedDecade);
-    if (savedLanguage) setLanguage(savedLanguage);
-    if (savedActor) setActor(savedActor);
-  }, []);
-
-  // Save preferences to localStorage
-  useEffect(() => {
+    // Save preferences to localStorage (optional, can be triggered by a save button later)
     localStorage.setItem('genre', genre);
     localStorage.setItem('duration', duration);
     localStorage.setItem('decade', decade);
     localStorage.setItem('language', language);
     localStorage.setItem('actor', actor);
-  }, [genre, duration, decade, language, actor]);
+    localStorage.setItem('director', director);
+  }, [genre, duration, decade, language, actor, director]);
 
   const getRecommendations = async () => {
+    setIsLoading(true);
+    setRecommendations([]);
     try {
-      const genreId = genres.find(g => g.name.toLowerCase() === genre.toLowerCase())?.id || '';
-      const decadeFilter = decade ? `&primary_release_date.gte=${decade}-01-01&primary_release_date.lte=${parseInt(decade) + 9}-12-31` : '';
-      const languageFilter = language ? `&with_original_language=${languageMap[language.toLowerCase()] || language.toLowerCase()}` : '';
+      // Actor filtering
       let actorId = '';
       if (actor) {
         const actorResponse = await axios.get(`https://api.themoviedb.org/3/search/person?api_key=${API_KEY}&query=${encodeURIComponent(actor)}`);
         actorId = actorResponse.data.results[0]?.id || '';
       }
-      const actorFilter = actorId ? `&with_cast=${actorId}` : '';
-      const durationFilter = {
-        'short': '&with_runtime.lte=90',
-        'medium': '&with_runtime.gte=90&with_runtime.lte=120',
-        'long': '&with_runtime.gte=120',
-      }[duration.toLowerCase()] || '';
-  
-      // Fetch multiple pages to get more movies
-      let allResults = [];
-      for (let page = 1; page <= 3; page++) {
-        const query = `https://api.themoviedb.org/3/discover/movie?api_key=${API_KEY}${genreId ? `&with_genres=${genreId}` : ''}${decadeFilter}${languageFilter}${actorFilter}${durationFilter}&sort_by=popularity.desc&page=${page}`;
-        console.log('API Query (Page', page, '):', query);
-  
-        const response = await axios.get(query);
-        const results = response.data.results;
-        allResults = [...allResults, ...results];
+
+      // Director filtering: Fetch movies directed by the person
+      let directedMovies = [];
+      let directorId = '';
+      if (director) {
+        const directorResponse = await axios.get(`https://api.themoviedb.org/3/search/person?api_key=${API_KEY}&query=${encodeURIComponent(director)}`);
+        directorId = directorResponse.data.results.find(person => person.known_for_department === "Directing")?.id;
+        if (directorId) {
+          const creditsResponse = await axios.get(`https://api.themoviedb.org/3/person/${directorId}/movie_credits?api_key=${API_KEY}`);
+          const potentialDirectedMovies = creditsResponse.data.crew
+            .filter(credit => credit.job === "Director")
+            .map(credit => credit.id);
+
+          directedMovies = await Promise.all(potentialDirectedMovies.map(async (movieId) => {
+            try {
+              const detailsResponse = await axios.get(`https://api.themoviedb.org/3/movie/${movieId}?api_key=${API_KEY}&append_to_response=credits`);
+              const directors = detailsResponse.data.credits.crew
+                .filter(crew => crew.job === "Director")
+                .map(d => d.id);
+              if (directors.length > 0 && directors.includes(parseInt(directorId))) {
+                return {
+                  id: movieId,
+                  title: detailsResponse.data.title,
+                  poster_path: detailsResponse.data.poster_path,
+                  release_date: detailsResponse.data.release_date,
+                  original_language: detailsResponse.data.original_language,
+                };
+              }
+              return null;
+            } catch (error) {
+              console.error(`Error verifying movie ${movieId}:`, error);
+              return null;
+            }
+          })).then(results => results.filter(movie => movie !== null));
+        }
       }
-  
-      // Fetch runtime for each movie
-      const moviesWithRuntime = await Promise.all(
+
+      // If no director specified, use discover endpoint
+      let allResults = directedMovies;
+      if (!director) {
+        const genreId = genres.find(g => g.name.toLowerCase() === genre.toLowerCase())?.id || '';
+        const decadeFilter = decade ? `&primary_release_date.gte=${decade}-01-01&primary_release_date.lte=${parseInt(decade) + 9}-12-31` : '';
+        const languageFilter = language ? `&with_original_language=${languageMap[language.toLowerCase()] || language.toLowerCase()}` : '';
+        const actorFilter = actorId ? `&with_cast=${actorId}` : '';
+        const durationFilter = {
+          'short': '&with_runtime.lte=90',
+          'medium': '&with_runtime.gte=90&with_runtime.lte=120',
+          'long': '&with_runtime.gte=120',
+        }[duration.toLowerCase()] || '';
+
+        for (let page = 1; page <= 3; page++) {
+          const query = `https://api.themoviedb.org/3/discover/movie?api_key=${API_KEY}`
+            + `${genreId ? `&with_genres=${genreId}` : ''}`
+            + `${decadeFilter}${languageFilter}${actorFilter}${durationFilter}`
+            + `&sort_by=popularity.desc&page=${page}`;
+          console.log('API Query (Page', page, '):', query);
+    
+          const response = await axios.get(query);
+          const results = response.data.results;
+          allResults = [...allResults, ...results];
+        }
+      }
+
+      // Fetch runtime and additional details for filtering
+      const moviesWithDetails = await Promise.all(
         allResults.map(async (movie) => {
-          const detailsResponse = await axios.get(`https://api.themoviedb.org/3/movie/${movie.id}?api_key=${API_KEY}`);
-          return {
-            ...movie,
-            runtime: detailsResponse.data.runtime || 0,
-          };
+          try {
+            const detailsResponse = await axios.get(`https://api.themoviedb.org/3/movie/${movie.id}?api_key=${API_KEY}&append_to_response=credits`);
+            return {
+              ...movie,
+              runtime: detailsResponse.data.runtime || 0,
+              genres: detailsResponse.data.genres.map(g => g.id),
+              cast: detailsResponse.data.credits.cast.map(c => c.id),
+            };
+          } catch (error) {
+            console.error(`Error fetching details for movie ${movie.id}:`, error);
+            return null;
+          }
         })
       );
-  
-      console.log('All Fetched Movies with Runtimes:', moviesWithRuntime.map(movie => ({
-        title: movie.title,
-        runtime: movie.runtime,
-      })));
-  
-      // Client-side filtering for duration
-      const filteredResults = moviesWithRuntime.filter(movie => {
+
+      // Filter out null results and apply criteria
+      const genreId = genres.find(g => g.name.toLowerCase() === genre.toLowerCase())?.id || '';
+      const validMovies = moviesWithDetails.filter(movie => movie !== null);
+      const filteredResults = validMovies.filter(movie => {
         const runtime = movie.runtime || 0;
-        if (duration.toLowerCase() === 'short') return runtime > 0 && runtime <= 90;
-        if (duration.toLowerCase() === 'medium') return runtime >= 90 && runtime <= 120;
-        if (duration.toLowerCase() === 'long') return runtime >= 120;
-        return true; // If no duration selected, include all
-      }).slice(0, 10);
-  
-      console.log('Filtered Movies:', filteredResults.map(movie => ({
-        title: movie.title,
-        runtime: movie.runtime,
-      })));
-  
+        const matchesGenre = genre ? movie.genres.includes(genreId) : true;
+        const matchesDecade = decade ? (movie.release_date && movie.release_date.substring(0, 4) >= decade && movie.release_date.substring(0, 4) <= parseInt(decade) + 9) : true;
+        const matchesLanguage = language ? (movie.original_language === languageMap[language.toLowerCase()] || movie.original_language === language.toLowerCase()) : true;
+        const matchesActor = actorId ? movie.cast.includes(parseInt(actorId)) : true;
+        const matchesDuration = duration.toLowerCase() === 'short' ? runtime > 0 && runtime <= 90 :
+                               duration.toLowerCase() === 'medium' ? runtime >= 90 && runtime <= 120 :
+                               duration.toLowerCase() === 'long' ? runtime >= 120 : true;
+        return matchesGenre && matchesDecade && matchesLanguage && matchesActor && matchesDuration;
+      }).slice(0, 16);
+
       if (filteredResults.length === 0) {
-        setRecommendations([{ id: null, Poster: null, Title: 'No movies found matching your duration criteria.' }]);
+        setRecommendations([{ id: null, Poster: null, Title: 'No movies found matching your criteria. Try adjusting your preferences.' }]);
       } else {
         setRecommendations(filteredResults.map(movie => ({
           id: movie.id,
@@ -146,10 +211,11 @@ function App() {
         })));
       }
     } catch (error) {
-      console.error('Error fetching recommendations:', error);
-      setRecommendations([{ id: null, Poster: null, Title: 'Error loading recommendations' }]);
+      console.error('Error in getRecommendations:', error);
+      setRecommendations([{ id: null, Poster: null, Title: 'Error loading recommendations. Please try again later.' }]);
+    } finally {
+      setIsLoading(false);
     }
-
   };
 
   const fetchMovieDetails = async (movieId) => {
@@ -196,9 +262,9 @@ function App() {
           <label>Film Duration</label>
           <select value={duration} onChange={(e) => setDuration(e.target.value)}>
             <option value="">Any duration</option>
-            <option value="short">Short (&lt;90 min)</option> {/* Escaped < */}
+            <option value="short">Short (&lt;90 min)</option>
             <option value="medium">Medium (90-120 min)</option>
-            <option value="long">Long (&gt;120 min)</option> {/* Escaped > */}
+            <option value="long">Long (&gt;120 min)</option>
           </select>
         </div>
         <div className="input-group">
@@ -228,30 +294,79 @@ function App() {
         </div>
         <div className="input-group">
           <img src={iconActor} alt="Actor Icon" />
-          <label>Favorite Actor</label>
+          <label>Actress/Actor</label>
           <input
             value={actor}
             onChange={(e) => setActor(e.target.value)}
-            placeholder="Enter Actor"
+            placeholder="Enter Actress/Actor"
           />
         </div>
-        <div className="input-group button-group">
-          <button onClick={getRecommendations}>Get My Film!</button>
+        <div className="input-group">
+          <img src={iconDirector} alt="Director Icon" />
+          <label>Director</label>
+          <input
+            value={director}
+            onChange={(e) => setDirector(e.target.value)}
+            placeholder="Enter Director"
+          />
         </div>
       </div>
 
-      {/* Recommendations Section */}
-      <div className="recommendation">
-        {recommendations.map((rec, index) => (
-          <div key={index} className="recommendation-item">
-            {rec.Poster && (
-              <img src={rec.Poster} alt={`Movie Poster ${index + 1}`} className="poster" onClick={() => fetchMovieDetails(rec.id)} />
-            )}
-          </div>
-        ))}
+      <div className="input-group button-group">
+        <button 
+          onClick={getRecommendations} 
+          disabled={isLoading}
+          className={isLoading ? 'button-disabled' : ''}
+        >
+          {isLoading ? 'Loading...' : 'Get My Film!'}
+        </button>
       </div>
 
-      {/* Modal for Movie Details */}
+      <div className="recommendation">
+        {isLoading ? (
+          <div className="spinner"></div>
+        ) : recommendations.length > 0 ? (
+          recommendations.map((rec, index) => (
+            <div key={index} className="recommendation-item">
+              {rec.Poster ? (
+                <img
+                  src={rec.Poster}
+                  alt={`Movie Poster ${index + 1}`}
+                  className="poster"
+                  onClick={() => fetchMovieDetails(rec.id)}
+                />
+              ) : (
+                <p>{rec.Title}</p>
+              )}
+            </div>
+          ))
+        ) : (
+          <p>No recommendations yet. Select your preferences and click "Get My Film!"</p>
+        )}
+      </div>
+
+      {trendingFilms.length > 0 && (
+        <div className="trending-section">
+          <h2>Top 3 Trending Films Weekly</h2>
+          <div className="trending-recommendation">
+            {trendingFilms.map((film, index) => (
+              <div key={index} className="recommendation-item">
+                {film.Poster ? (
+                  <img
+                    src={film.Poster}
+                    alt={`Trending Movie Poster ${index + 1}`}
+                    className="trending-poster"
+                    onClick={() => fetchMovieDetails(film.id)}
+                  />
+                ) : (
+                  <p>{film.Title}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {selectedMovie && movieDetails && (
         <div className="modal" onClick={closeModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>

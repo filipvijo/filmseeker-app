@@ -238,6 +238,60 @@ button:hover {
   transform: translateY(-2px);
 }
 
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3; /* Light grey */
+  border-top: 4px solid #3498db; /* Blue */
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 20px auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.button-disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.error-message {
+  color: #e74c3c; /* Red for errors */
+  text-align: center;
+  margin: 10px 0;
+}
+
+/* Trending Section Styles */
+.trending-section {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.trending-section h2 {
+  font-size: 1.5em; /* Slightly smaller than h1 */
+  color: #93c5fd;
+  margin-bottom: 15px;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.trending-recommendation {
+  display: flex;
+  flex-direction: row; /* Horizontal alignment */
+  justify-content: center;
+  gap: 20px; /* Match the gap used in .recommendation */
+}
+
+.trending-poster {
+  width: 165px; /* 10% increase from 150px (150 * 1.10) */
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  margin: 0;
+}
+
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
   .App {
@@ -295,6 +349,18 @@ button:hover {
 
   .poster {
     width: 80px;
+  }
+
+  .trending-section h2 {
+    font-size: 0.9em;
+  }
+
+  .trending-recommendation {
+    gap: 10px; /* Slightly smaller gap for mobile */
+  }
+
+  .trending-poster {
+    width: 88px; /* 10% increase from 80px (80 * 1.10) */
   }
 
   .modal-content {
@@ -358,6 +424,18 @@ button:hover {
     width: 70px;
   }
 
+  .trending-section h2 {
+    font-size: 0.8em;
+  }
+
+  .trending-recommendation {
+    gap: 8px; /* Even smaller gap for very small screens */
+  }
+
+  .trending-poster {
+    width: 77px; /* 10% increase from 70px (70 * 1.10) */
+  }
+
   .modal-content {
     padding: 8px;
     max-height: 60vh;
@@ -378,5 +456,31 @@ button:hover {
   .trailer-button {
     padding: 5px 10px;
     font-size: 0.75em;
+  }
+
+  .modal .modal-content .modal-poster {
+    max-width: 100px !important; /* Enforce maximum width */
+    width: 100px !important; /* Explicit width to override defaults */
+    height: auto !important; /* Maintain aspect ratio */
+    margin-bottom: 10px;
+    border-radius: 5px;
+    object-fit: contain; /* Ensure the image fits within the bounds */
+  }
+
+  .modal .modal-content {
+    position: relative;
+    max-width: 100%; /* Allow full width of parent */
+    width: auto; /* Adjust to content */
+    padding: 10px;
+    box-sizing: border-box; /* Include padding in width calculation */
+  }
+
+  .recommendation-item p {
+    transition: none; /* Removes the scaling animation */
+  }
+  
+  .recommendation-item:hover p {
+    transform: none; /* Prevents scaling on hover */
+    box-shadow: none; /* Removes shadow on hover */
   }
 }
