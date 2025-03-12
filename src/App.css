@@ -1,3 +1,18 @@
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.7);
+  }
+  70% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 10px rgba(212, 175, 55, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(212, 175, 55, 0);
+  }
+}
+
 .App {
   text-align: center;
   padding: 50px;
@@ -441,22 +456,22 @@ button:focus {
 }
 
 /* Tip Button Styles */
-/* Tip Button Styles */
 .tip-button {
   position: fixed;
-  top: 20px; /* Moves it to the top */
-  right: 20px; /* Keeps it on the right */
-  background-color: rgba(163, 191, 250, 0.8); /* Soft blue with transparency */
+  bottom: 20px; /* Consistent bottom position */
+  right: 20px;
+  background-color: rgba(212, 175, 55, 0.8); /* Soft gold for contrast */
   border-radius: 50%;
-  padding: 10px;
+  padding: 12px; /* Slightly larger padding */
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-  transition: all 0.3s ease; /* Smooth hover effect */
-  z-index: 1000; /* Ensures it stays above other content */
+  transition: all 0.3s ease;
+  z-index: 1000;
+  animation: pulse 2s infinite; /* Add pulse animation */
 }
 
 .tip-button:hover {
-  background-color: rgba(163, 191, 250, 1); /* Full opacity on hover */
-  transform: scale(1.1); /* Slight enlargement */
+  background-color: rgba(212, 175, 55, 1); /* Full opacity on hover */
+  transform: scale(1.1);
 }
 
 .tip-icon {
@@ -465,10 +480,17 @@ button:focus {
   display: block;
 }
 
-/* Mobile Adjustments */
+/* Tablet Adjustments */
 @media (max-width: 768px) {
-  .App {
+  .tip-button {
+    bottom: 15px;
+    right: 15px;
     padding: 10px;
+  }
+
+  .tip-icon {
+    width: 28px;
+    height: 28px;
   }
 
   .logo {
@@ -574,21 +596,21 @@ button:focus {
   .movie-of-the-month-poster {
     width: 200px;
   }
+}
 
-  /* Adjust Tip Button for Tablets */
+/* Mobile Phone Adjustments */
+@media (max-width: 480px) {
   .tip-button {
     bottom: 15px;
     right: 15px;
-    padding: 8px;
+    padding: 10px; /* Maintain larger size for tapability */
   }
 
   .tip-icon {
     width: 25px;
-    height: 25px;
+    height: 25px; /* Larger than original 20px */
   }
-}
 
-@media (max-width: 480px) {
   .logo {
     width: 115px; /* 15% bigger from 100px */
   }
@@ -622,7 +644,7 @@ button:focus {
   }
 
   .poster {
-    width: 70px;
+    width: 90px; /* Increased from 70px for better visibility */
   }
 
   .trending-section h2 {
@@ -673,17 +695,5 @@ button:focus {
 
   .movie-of-the-month-poster {
     width: 150px;
-  }
-
-  /* Adjust Tip Button for Mobile Phones */
-  .tip-button {
-    bottom: 10px;
-    right: 10px;
-    padding: 6px;
-  }
-
-  .tip-icon {
-    width: 20px;
-    height: 20px;
   }
 }

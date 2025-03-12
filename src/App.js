@@ -471,7 +471,23 @@ function App() {
             </p>
             <p>Enjoy the Films.</p>
             <div className="modal-buttons">
-              <a href="mailto:artmediagb@gmail.com" className="message-button">Message</a>
+            <a
+  href="mailto:artmediagb@gmail.com"
+  className="message-button"
+  title="Send us an email"
+  style={{
+    display: 'inline-block',
+    padding: '10px 20px',
+    backgroundColor: '#a3bffa',
+    color: '#ffffff',
+    textDecoration: 'none',
+    borderRadius: '5px',
+    fontWeight: 'bold',
+    cursor: 'pointer',
+  }}
+>
+  Message
+</a>
               <button className="close-button" onClick={closeAboutUs}>Close</button>
             </div>
           </div>
