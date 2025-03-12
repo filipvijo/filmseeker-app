@@ -8,6 +8,11 @@ import iconLength from './icon-length.png';
 import iconLanguage from './icon-language.png';
 import iconActor from './icon-actor.png';
 import iconDirector from './icon-director.png';
+import xIcon from './x-icon.png';
+import facebookIcon from './facebook-icon.png';
+import whatsappIcon from './whatsapp-icon.png';
+import instagramIcon from './instagram-icon.png';
+import tipIcon from './tip-icon.png'; // Add your tip icon (e.g., coffee cup or heart)
 
 function App() {
   const [genre, setGenre] = useState('');
@@ -22,6 +27,15 @@ function App() {
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [movieDetails, setMovieDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showMovieOfTheMonth, setShowMovieOfTheMonth] = useState(true);
+  const [movieOfTheMonthDetails, setMovieOfTheMonthDetails] = useState(null);
+  const [showDetails, setShowDetails] = useState(false);
+  const [showAboutUs, setShowAboutUs] = useState(false);
+
+  // Define the Movie of the Month (update this monthly with ID only)
+  const movieOfTheMonth = {
+    id: 207, // Example: Braveheart (1995) - Replace with your chosen movie ID
+  };
 
   const API_KEY = process.env.REACT_APP_TMDB_API_KEY;
 
@@ -45,7 +59,7 @@ function App() {
     'italian': 'it',
   };
 
-  // Fetch trending films on page load
+  // Fetch trending films and Movie of the Month on page load
   useEffect(() => {
     const fetchTrendingFilms = async () => {
       try {
@@ -62,7 +76,29 @@ function App() {
         console.error('Error fetching trending films:', error);
       }
     };
+
+    const fetchMovieOfTheMonth = async () => {
+      try {
+        const timestamp = new Date().getTime();
+        const detailsResponse = await axios.get(
+          `https://api.themoviedb.org/3/movie/${movieOfTheMonth.id}?api_key=${API_KEY}&_=${timestamp}`
+        );
+        const videosResponse = await axios.get(
+          `https://api.themoviedb.org/3/movie/${movieOfTheMonth.id}/videos?api_key=${API_KEY}&_=${timestamp}`
+        );
+        const trailer = videosResponse.data.results.find(video => video.type === 'Trailer' && video.site === 'YouTube');
+        setMovieOfTheMonthDetails({
+          ...detailsResponse.data,
+          trailerKey: trailer ? trailer.key : null,
+        });
+      } catch (error) {
+        console.error('Error fetching Movie of the Month details:', error);
+        setMovieOfTheMonthDetails({ error: 'Failed to load Movie of the Month details.' });
+      }
+    };
+
     fetchTrendingFilms();
+    fetchMovieOfTheMonth();
 
     // Clear all preferences on page load
     localStorage.clear();
@@ -86,7 +122,7 @@ function App() {
   }, [API_KEY]);
 
   useEffect(() => {
-    // Save preferences to localStorage (optional, can be triggered by a save button later)
+    // Save preferences to localStorage
     localStorage.setItem('genre', genre);
     localStorage.setItem('duration', duration);
     localStorage.setItem('decade', decade);
@@ -98,56 +134,88 @@ function App() {
   const getRecommendations = async () => {
     setIsLoading(true);
     setRecommendations([]);
+
+    // Trim actor and director inputs to remove leading/trailing spaces
+    const trimmedActor = actor.trim();
+    const trimmedDirector = director.trim();
+
+    // Check if any preference is set
+    const hasPreferences = genre || duration || decade || language || trimmedActor || trimmedDirector;
+
+    // If no preferences are set, show an error message and exit
+    if (!hasPreferences) {
+      setRecommendations([{ 
+        id: null, 
+        Poster: null, 
+        Title: 'Please enter at least one preference to get recommendations.' 
+      }]);
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      // Actor filtering
       let actorId = '';
-      if (actor) {
-        const actorResponse = await axios.get(`https://api.themoviedb.org/3/search/person?api_key=${API_KEY}&query=${encodeURIComponent(actor)}`);
+      if (trimmedActor) {
+        const actorResponse = await axios.get(
+          `https://api.themoviedb.org/3/search/person?api_key=${API_KEY}&query=${encodeURIComponent(trimmedActor)}`
+        );
         actorId = actorResponse.data.results[0]?.id || '';
       }
 
-      // Director filtering: Fetch movies directed by the person
       let directedMovies = [];
       let directorId = '';
-      if (director) {
-        const directorResponse = await axios.get(`https://api.themoviedb.org/3/search/person?api_key=${API_KEY}&query=${encodeURIComponent(director)}`);
-        directorId = directorResponse.data.results.find(person => person.known_for_department === "Directing")?.id;
+      if (trimmedDirector) {
+        const directorResponse = await axios.get(
+          `https://api.themoviedb.org/3/search/person?api_key=${API_KEY}&query=${encodeURIComponent(trimmedDirector)}`
+        );
+        const directorResult = directorResponse.data.results.find(person => 
+          person.name.toLowerCase() === trimmedDirector.toLowerCase() || 
+          person.known_for_department.toLowerCase().includes("directing")
+        );
+        directorId = directorResult?.id || '';
         if (directorId) {
-          const creditsResponse = await axios.get(`https://api.themoviedb.org/3/person/${directorId}/movie_credits?api_key=${API_KEY}`);
-          const potentialDirectedMovies = creditsResponse.data.crew
+          const creditsResponse = await axios.get(
+            `https://api.themoviedb.org/3/person/${directorId}/movie_credits?api_key=${API_KEY}`
+          );
+          directedMovies = creditsResponse.data.crew
             .filter(credit => credit.job === "Director")
-            .map(credit => credit.id);
-
-          directedMovies = await Promise.all(potentialDirectedMovies.map(async (movieId) => {
-            try {
-              const detailsResponse = await axios.get(`https://api.themoviedb.org/3/movie/${movieId}?api_key=${API_KEY}&append_to_response=credits`);
-              const directors = detailsResponse.data.credits.crew
-                .filter(crew => crew.job === "Director")
-                .map(d => d.id);
-              if (directors.length > 0 && directors.includes(parseInt(directorId))) {
-                return {
-                  id: movieId,
-                  title: detailsResponse.data.title,
-                  poster_path: detailsResponse.data.poster_path,
-                  release_date: detailsResponse.data.release_date,
-                  original_language: detailsResponse.data.original_language,
-                };
+            .map(credit => credit.id)
+            .map(async (movieId) => {
+              try {
+                const detailsResponse = await axios.get(
+                  `https://api.themoviedb.org/3/movie/${movieId}?api_key=${API_KEY}&append_to_response=credits`
+                );
+                const directors = detailsResponse.data.credits.crew
+                  .filter(crew => crew.job === "Director")
+                  .map(d => d.id);
+                if (directors.length > 0 && directors.includes(parseInt(directorId))) {
+                  return {
+                    id: movieId,
+                    title: detailsResponse.data.title,
+                    poster_path: detailsResponse.data.poster_path,
+                    release_date: detailsResponse.data.release_date,
+                    original_language: detailsResponse.data.original_language,
+                  };
+                }
+                return null;
+              } catch (error) {
+                console.error(`Error verifying movie ${movieId}:`, error);
+                return null;
               }
-              return null;
-            } catch (error) {
-              console.error(`Error verifying movie ${movieId}:`, error);
-              return null;
-            }
-          })).then(results => results.filter(movie => movie !== null));
+            });
+          directedMovies = await Promise.all(directedMovies.filter(result => result !== null));
         }
       }
 
-      // If no director specified, use discover endpoint
       let allResults = directedMovies;
-      if (!director) {
+      if (!trimmedDirector) {
         const genreId = genres.find(g => g.name.toLowerCase() === genre.toLowerCase())?.id || '';
-        const decadeFilter = decade ? `&primary_release_date.gte=${decade}-01-01&primary_release_date.lte=${parseInt(decade) + 9}-12-31` : '';
-        const languageFilter = language ? `&with_original_language=${languageMap[language.toLowerCase()] || language.toLowerCase()}` : '';
+        const decadeFilter = decade 
+          ? `&primary_release_date.gte=${decade}-01-01&primary_release_date.lte=${parseInt(decade) + 9}-12-31` 
+          : '';
+        const languageFilter = language 
+          ? `&with_original_language=${languageMap[language.toLowerCase()] || language.toLowerCase()}` 
+          : '';
         const actorFilter = actorId ? `&with_cast=${actorId}` : '';
         const durationFilter = {
           'short': '&with_runtime.lte=90',
@@ -160,19 +228,17 @@ function App() {
             + `${genreId ? `&with_genres=${genreId}` : ''}`
             + `${decadeFilter}${languageFilter}${actorFilter}${durationFilter}`
             + `&sort_by=popularity.desc&page=${page}`;
-          console.log('API Query (Page', page, '):', query);
-    
           const response = await axios.get(query);
-          const results = response.data.results;
-          allResults = [...allResults, ...results];
+          allResults = [...allResults, ...response.data.results];
         }
       }
 
-      // Fetch runtime and additional details for filtering
       const moviesWithDetails = await Promise.all(
         allResults.map(async (movie) => {
           try {
-            const detailsResponse = await axios.get(`https://api.themoviedb.org/3/movie/${movie.id}?api_key=${API_KEY}&append_to_response=credits`);
+            const detailsResponse = await axios.get(
+              `https://api.themoviedb.org/3/movie/${movie.id}?api_key=${API_KEY}&append_to_response=credits`
+            );
             return {
               ...movie,
               runtime: detailsResponse.data.runtime || 0,
@@ -186,14 +252,17 @@ function App() {
         })
       );
 
-      // Filter out null results and apply criteria
       const genreId = genres.find(g => g.name.toLowerCase() === genre.toLowerCase())?.id || '';
       const validMovies = moviesWithDetails.filter(movie => movie !== null);
       const filteredResults = validMovies.filter(movie => {
         const runtime = movie.runtime || 0;
         const matchesGenre = genre ? movie.genres.includes(genreId) : true;
-        const matchesDecade = decade ? (movie.release_date && movie.release_date.substring(0, 4) >= decade && movie.release_date.substring(0, 4) <= parseInt(decade) + 9) : true;
-        const matchesLanguage = language ? (movie.original_language === languageMap[language.toLowerCase()] || movie.original_language === language.toLowerCase()) : true;
+        const matchesDecade = decade 
+          ? (movie.release_date && movie.release_date.substring(0, 4) >= decade && movie.release_date.substring(0, 4) <= parseInt(decade) + 9) 
+          : true;
+        const matchesLanguage = language 
+          ? (movie.original_language === languageMap[language.toLowerCase()] || movie.original_language === language.toLowerCase()) 
+          : true;
         const matchesActor = actorId ? movie.cast.includes(parseInt(actorId)) : true;
         const matchesDuration = duration.toLowerCase() === 'short' ? runtime > 0 && runtime <= 90 :
                                duration.toLowerCase() === 'medium' ? runtime >= 90 && runtime <= 120 :
@@ -202,7 +271,11 @@ function App() {
       }).slice(0, 16);
 
       if (filteredResults.length === 0) {
-        setRecommendations([{ id: null, Poster: null, Title: 'No movies found matching your criteria. Try adjusting your preferences.' }]);
+        setRecommendations([{ 
+          id: null, 
+          Poster: null, 
+          Title: 'No movies found matching your criteria. Try adjusting your preferences.' 
+        }]);
       } else {
         setRecommendations(filteredResults.map(movie => ({
           id: movie.id,
@@ -212,7 +285,11 @@ function App() {
       }
     } catch (error) {
       console.error('Error in getRecommendations:', error);
-      setRecommendations([{ id: null, Poster: null, Title: 'Error loading recommendations. Please try again later.' }]);
+      setRecommendations([{ 
+        id: null, 
+        Poster: null, 
+        Title: 'Error loading recommendations. Please try again later.' 
+      }]);
     } finally {
       setIsLoading(false);
     }
@@ -220,16 +297,51 @@ function App() {
 
   const fetchMovieDetails = async (movieId) => {
     try {
-      const detailsResponse = await axios.get(`https://api.themoviedb.org/3/movie/${movieId}?api_key=${API_KEY}`);
-      const videosResponse = await axios.get(`https://api.themoviedb.org/3/movie/${movieId}/videos?api_key=${API_KEY}`);
+      const timestamp = new Date().getTime();
+      const detailsResponse = await axios.get(
+        `https://api.themoviedb.org/3/movie/${movieId}?api_key=${API_KEY}&_=${timestamp}`
+      );
+      const videosResponse = await axios.get(
+        `https://api.themoviedb.org/3/movie/${movieId}/videos?api_key=${API_KEY}&_=${timestamp}`
+      );
+
+      if (detailsResponse.data.id !== movieId) {
+        throw new Error(`Movie ID mismatch: requested ${movieId}, received ${detailsResponse.data.id}`);
+      }
+
+      let watchOption = null;
+      let subscriptionMessage = null;
+      try {
+        // Placeholder for JustWatch API - replace with actual implementation if available
+        // const justWatchResponse = await axios.get(`https://api.justwatch.com/content/titles/movie/${movieId}/locale/en_US`);
+        // const offers = justWatchResponse.data.offers || [];
+        // watchOption = offers.find(offer => offer.monetization_type === 'rent' || offer.monetization_type === 'buy');
+        // if (!watchOption) {
+        //   const subscriptionOption = offers.find(offer => offer.monetization_type === 'flatrate');
+        //   if (subscriptionOption) {
+        //     const providerName = subscriptionOption.provider_id === 8 ? 'Netflix' : 'a subscription service';
+        //     subscriptionMessage = `Available on ${providerName} (subscription required).`;
+        //   }
+        // }
+      } catch (justWatchError) {
+        console.error('Error fetching JustWatch data:', justWatchError);
+      }
+
       const trailer = videosResponse.data.results.find(video => video.type === 'Trailer' && video.site === 'YouTube');
       setMovieDetails({
         ...detailsResponse.data,
         trailerKey: trailer ? trailer.key : null,
+        watchOption: watchOption ? {
+          provider: watchOption.provider_id,
+          url: watchOption.urls.standard_web ? watchOption.urls.standard_web : null,
+          price: watchOption.retail_price ? `$${watchOption.retail_price.amount}` : 'N/A'
+        } : null,
+        subscriptionMessage: subscriptionMessage,
       });
       setSelectedMovie(movieId);
     } catch (error) {
       console.error('Error fetching movie details:', error);
+      setMovieDetails({ error: 'Failed to load movie details.' });
     }
   };
 
@@ -244,27 +356,150 @@ function App() {
     }
   };
 
+  const closeMovieOfTheMonth = () => {
+    setShowMovieOfTheMonth(false);
+  };
+
+  const toggleDetails = () => {
+    setShowDetails(!showDetails);
+  };
+
+  const playMovieOfTheMonthTrailer = () => {
+    if (movieOfTheMonthDetails && movieOfTheMonthDetails.trailerKey) {
+      window.open(`https://www.youtube.com/watch?v=${movieOfTheMonthDetails.trailerKey}`, '_blank');
+    }
+  };
+
+  // Helper function to generate movie URL (customize as needed)
+  const getMovieUrl = (movieId) => `https://filmseeker-app.vercel.app/movie/${movieId}`;
+
+  // Social media sharing functions
+  const shareOnX = (movie) => {
+    const text = `Check out this movie: ${movie.title}`;
+    const url = getMovieUrl(movie.id);
+    const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+    window.open(shareUrl, '_blank');
+  };
+
+  const shareOnFacebook = (movie) => {
+    const url = getMovieUrl(movie.id);
+    const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+    window.open(shareUrl, '_blank');
+  };
+
+  const shareOnWhatsApp = (movie) => {
+    const text = `Check out this movie: ${movie.title}`;
+    const url = getMovieUrl(movie.id);
+    const shareUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text + ' ' + url)}`;
+    window.open(shareUrl, '_blank');
+  };
+
+  const shareOnInstagram = (movie) => {
+    const text = `Check out this movie: ${movie.title} - ${movie.overview.substring(0, 100)}...`;
+    navigator.clipboard.writeText(text).then(() => {
+      alert('Message copied to clipboard! Paste it into Instagram to share.');
+    }).catch(() => {
+      alert('Failed to copy message. Please try again.');
+    });
+  };
+
+  // Functions for About Us pop-up
+  const openAboutUs = () => {
+    setShowAboutUs(true);
+  };
+
+  const closeAboutUs = () => {
+    setShowAboutUs(false);
+  };
+
   return (
     <div className="App">
-      <img src={logo} alt="FilmSeeker Logo" className="logo" />
+      {/* Clickable Logo */}
+      <img
+        src={logo}
+        alt="FilmSeeker Logo"
+        className="logo"
+        style={{ width: '287.5px', cursor: 'pointer' }}
+        onClick={openAboutUs}
+      />
+
+      {/* About Us Pop-Up */}
+      {showAboutUs && (
+        <div className="modal" onClick={closeAboutUs}>
+          <div className="modal-content about-us-modal" onClick={(e) => e.stopPropagation()}>
+            <h2>About Us</h2>
+            <p>
+              Thank you for being here.<br />
+              And most of all, thank you for being curious about films.
+            </p>
+            <p>
+              At FilmSeeker, our purpose is simple:<br />
+              To help you find the next film you're going to watch.<br />
+              And then come back for another.<br />
+              And another.<br />
+              And another.<br />
+              We believe there's always another story waiting to be found.
+            </p>
+            <p>
+              We don’t ask for your email.<br />
+              We don’t gather likes.<br />
+              We don’t make watch lists.<br />
+              There are plenty of great apps out there for that.<br />
+              We just want to help you find your next great film.<br />
+              That’s it.
+            </p>
+            <p>
+              And while you’re here, we hope you’ll feel encouraged to explore.<br />
+              To experiment.<br />
+              To discover films you might not have chosen otherwise.<br />
+              Because sometimes, the most unexpected story can awaken something new inside you.<br />
+              A film in a foreign language, made in a faraway place, can be surprisingly close to your own life experience.
+            </p>
+            <p>
+              We’re always open to your suggestions, comments, feedback—even emojis.<br />
+              Click the Message button and reach out any way you like.<br />
+              We’d love to hear from you.
+            </p>
+            <p>
+              And if you enjoyed your film recommendation or found something special through us,<br />
+              you can always leave us a tip by clicking the Tip button on the main page.<br />
+              It helps us keep the project alive—and makes our day!
+            </p>
+            <p>
+              Thank you for taking the time to read this modest text.<br />
+              And thank you on behalf of all the artists who will be discovered—or rediscovered—through you.
+            </p>
+            <p>Enjoy the Films.</p>
+            <div className="modal-buttons">
+              <a href="mailto:artmediagb@gmail.com" className="message-button">Message</a>
+              <button className="close-button" onClick={closeAboutUs}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {trendingFilms.length > 0 && (
         <div className="trending-section">
-          <h2>Top 3 Trending Films This Week</h2>
-          <div className="trending-recommendation">
-            {trendingFilms.map((film, index) => (
-              <div key={index} className="recommendation-item">
-                {film.Poster ? (
-                  <img
-                    src={film.Poster}
-                    alt={`Trending Movie Poster ${index + 1}`}
-                    className="trending-poster"
-                    onClick={() => fetchMovieDetails(film.id)}
-                  />
-                ) : (
-                  <p>{film.Title}</p>
-                )}
+          <div className="trending-container">
+            <div className="trending-recommendation">
+              <h2>Top 3 Trending Films This Week</h2>
+              <div className="poster-container">
+                {trendingFilms.map((film, index) => (
+                  <div key={index} className="recommendation-item">
+                    {film.Poster ? (
+                      <img
+                        src={film.Poster}
+                        alt={`Trending Movie Poster ${index + 1}`}
+                        className="trending-poster"
+                        onClick={() => fetchMovieDetails(film.id)}
+                      />
+                    ) : (
+                      <p>{film.Title}</p>
+                    )}
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
           </div>
         </div>
       )}
@@ -338,6 +573,7 @@ function App() {
           onClick={getRecommendations} 
           disabled={isLoading}
           className={isLoading ? 'button-disabled' : ''}
+          style={{ outline: 'none', boxShadow: 'none', border: 'none' }}
         >
           {isLoading ? 'Loading...' : 'Get My Film!'}
         </button>
@@ -366,26 +602,131 @@ function App() {
         )}
       </div>
 
-      {selectedMovie && movieDetails && (
-        <div className="modal" onClick={closeModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <button className="close-button" onClick={closeModal}>×</button>
-            {movieDetails.poster_path && (
-              <img
-                src={`https://image.tmdb.org/t/p/w200${movieDetails.poster_path}`}
-                alt={`${movieDetails.title} Poster`}
-                className="modal-poster"
-              />
-            )}
-            <h2>{movieDetails.title} ({movieDetails.release_date.split('-')[0]})</h2>
-            <p className="rating">Rating: {movieDetails.vote_average}/10</p>
-            <p className="overview">{movieDetails.overview}</p>
-            {movieDetails.trailerKey && (
-              <button className="trailer-button" onClick={playTrailer}>Watch Trailer</button>
+      {/* Movie of the Month Pop-Up */}
+      {showMovieOfTheMonth && movieOfTheMonthDetails && (
+        <div className="modal" onClick={closeMovieOfTheMonth}>
+          <div className="modal-content movie-of-the-month-modal" onClick={(e) => e.stopPropagation()}>
+            {!showDetails ? (
+              <div className="movie-of-the-month-container">
+                <h2>Our Movie of the Month</h2>
+                <img
+                  src={movieOfTheMonthDetails.poster_path ? `https://image.tmdb.org/t/p/w500${movieOfTheMonthDetails.poster_path}` : 'https://via.placeholder.com/300x450?text=No+Poster'}
+                  alt={`${movieOfTheMonthDetails.title} Poster`}
+                  className="movie-of-the-month-poster"
+                  onClick={toggleDetails}
+                  onError={(e) => { e.target.src = 'https://via.placeholder.com/300x450?text=No+Poster'; }}
+                />
+              </div>
+            ) : (
+              <>
+                <h2>Our Movie of the Month</h2>
+                {movieOfTheMonthDetails.error ? (
+                  <p>{movieOfTheMonthDetails.error}</p>
+                ) : (
+                  <>
+                    {movieOfTheMonthDetails.poster_path && (
+                      <img
+                        src={`https://image.tmdb.org/t/p/w200${movieOfTheMonthDetails.poster_path}`}
+                        alt={`${movieOfTheMonthDetails.title} Poster`}
+                        className="modal-poster"
+                        onError={(e) => { e.target.src = 'https://via.placeholder.com/200x300?text=No+Poster'; }}
+                      />
+                    )}
+                    <h3>{movieOfTheMonthDetails.title} ({movieOfTheMonthDetails.release_date ? movieOfTheMonthDetails.release_date.split('-')[0] : 'N/A'})</h3>
+                    <p className="rating">Rating: {movieOfTheMonthDetails.vote_average}/10</p>
+                    <p className="overview">{movieOfTheMonthDetails.overview}</p>
+                    {movieOfTheMonthDetails.trailerKey && (
+                      <button className="trailer-button" onClick={playMovieOfTheMonthTrailer}>Watch Trailer</button>
+                    )}
+                  </>
+                )}
+                <button className="trailer-button" onClick={toggleDetails} style={{ marginTop: '10px' }}>
+                  Back to Poster
+                </button>
+              </>
             )}
           </div>
         </div>
       )}
+
+      {/* Movie Details Modal with Sharing Buttons */}
+      {selectedMovie && movieDetails && (
+        <div className="modal" onClick={closeModal}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            {movieDetails.error ? (
+              <p>{movieDetails.error}</p>
+            ) : movieDetails.id !== selectedMovie ? (
+              <p>Error: Movie ID mismatch.</p>
+            ) : (
+              <>
+                {movieDetails.poster_path && (
+                  <img
+                    src={`https://image.tmdb.org/t/p/w200${movieDetails.poster_path}`}
+                    alt={`${movieDetails.title} Poster`}
+                    className="modal-poster"
+                    onError={(e) => { e.target.src = 'https://via.placeholder.com/200x300?text=No+Poster'; }}
+                  />
+                )}
+                <h2>{movieDetails.title} ({movieDetails.release_date ? movieDetails.release_date.split('-')[0] : 'N/A'})</h2>
+                <p className="rating">Rating: {movieDetails.vote_average}/10</p>
+                <p className="overview">{movieDetails.overview}</p>
+                {movieDetails.trailerKey && (
+                  <button className="trailer-button" onClick={playTrailer}>Watch Trailer</button>
+                )}
+                {movieDetails.watchOption && movieDetails.watchOption.url ? (
+                  <a href={movieDetails.watchOption.url} target="_blank" rel="noopener noreferrer">
+                    <button className="trailer-button" style={{ marginLeft: '10px' }}>
+                      Watch Film Now ({movieDetails.watchOption.price})
+                    </button>
+                  </a>
+                ) : movieDetails.subscriptionMessage ? (
+                  <p>{movieDetails.subscriptionMessage}</p>
+                ) : (
+                  <p>No affordable rental option available at this time.</p>
+                )}
+                {/* Social Media Sharing Buttons with Icons */}
+                <div className="share-buttons">
+                  <img
+                    src={xIcon}
+                    alt="Share on X"
+                    className="share-icon"
+                    onClick={() => shareOnX(movieDetails)}
+                  />
+                  <img
+                    src={facebookIcon}
+                    alt="Share on Facebook"
+                    className="share-icon"
+                    onClick={() => shareOnFacebook(movieDetails)}
+                  />
+                  <img
+                    src={whatsappIcon}
+                    alt="Share on WhatsApp"
+                    className="share-icon"
+                    onClick={() => shareOnWhatsApp(movieDetails)}
+                  />
+                  <img
+                    src={instagramIcon}
+                    alt="Share on Instagram"
+                    className="share-icon"
+                    onClick={() => shareOnInstagram(movieDetails)}
+                  />
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Floating Tip Button */}
+      <a
+        href="https://your-payment-link.com" // Replace with your actual payment link
+        target="_blank"
+        rel="noopener noreferrer"
+        className="tip-button"
+        aria-label="Send a tip to support FilmSeeker"
+      >
+        <img src={tipIcon} alt="Tip Icon" className="tip-icon" />
+      </a>
     </div>
   );
 }
