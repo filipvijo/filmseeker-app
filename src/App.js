@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import axios from 'axios';
+import { db } from './firebase'; // Import Firestore
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore'; // Firestore methods
 import logo from './logo.png';
 import iconGenre from './icon-genre.png';
 import iconMood from './icon-mood.png';
@@ -12,7 +14,7 @@ import xIcon from './x-icon.png';
 import facebookIcon from './facebook-icon.png';
 import whatsappIcon from './whatsapp-icon.png';
 import instagramIcon from './instagram-icon.png';
-import tipIcon from './tip-icon.png'; // Add your tip icon (e.g., coffee cup or heart)
+import tipIcon from './tip-icon.png';
 
 function App() {
   const [genre, setGenre] = useState('');
@@ -27,10 +29,12 @@ function App() {
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [movieDetails, setMovieDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [showMovieOfTheMonth, setShowMovieOfTheMonth] = useState(true);
+  const [showMovieOfTheMonth, setShowMovieOfTheMonth] = useState(false);
   const [movieOfTheMonthDetails, setMovieOfTheMonthDetails] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
   const [showAboutUs, setShowAboutUs] = useState(false);
+  const [showMessagePopup, setShowMessagePopup] = useState(false);
+  const [message, setMessage] = useState('');
 
   // Define the Movie of the Month (update this monthly with ID only)
   const movieOfTheMonth = {
@@ -65,7 +69,7 @@ function App() {
       try {
         const response = await axios.get(`https://api.themoviedb.org/3/trending/movie/week?api_key=${API_KEY}`);
         const trending = response.data.results
-          .slice(0, 3) // Take top 3
+          .slice(0, 3)
           .map(movie => ({
             id: movie.id,
             Poster: movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : null,
@@ -107,7 +111,7 @@ function App() {
     setDecade('');
     setLanguage('');
     setActor('');
-    setDirector('');
+    setDirector();
 
     // Fetch genres from TMDB
     const fetchGenres = async () => {
@@ -119,7 +123,7 @@ function App() {
       }
     };
     fetchGenres();
-  }, [API_KEY]);
+  }, [API_KEY, movieOfTheMonth.id]); // Added movieOfTheMonth.id to dependency array
 
   useEffect(() => {
     // Save preferences to localStorage
@@ -135,20 +139,13 @@ function App() {
     setIsLoading(true);
     setRecommendations([]);
 
-    // Trim actor and director inputs to remove leading/trailing spaces
     const trimmedActor = actor.trim();
     const trimmedDirector = director.trim();
 
-    // Check if any preference is set
     const hasPreferences = genre || duration || decade || language || trimmedActor || trimmedDirector;
 
-    // If no preferences are set, show an error message and exit
     if (!hasPreferences) {
-      setRecommendations([{ 
-        id: null, 
-        Poster: null, 
-        Title: 'Please enter at least one preference to get recommendations.' 
-      }]);
+      setRecommendations([{ id: null, Poster: null, Title: 'Please enter at least one preference to get recommendations.' }]);
       setIsLoading(false);
       return;
     }
@@ -156,38 +153,27 @@ function App() {
     try {
       let actorId = '';
       if (trimmedActor) {
-        const actorResponse = await axios.get(
-          `https://api.themoviedb.org/3/search/person?api_key=${API_KEY}&query=${encodeURIComponent(trimmedActor)}`
-        );
+        const actorResponse = await axios.get(`https://api.themoviedb.org/3/search/person?api_key=${API_KEY}&query=${encodeURIComponent(trimmedActor)}`);
         actorId = actorResponse.data.results[0]?.id || '';
       }
 
       let directedMovies = [];
       let directorId = '';
       if (trimmedDirector) {
-        const directorResponse = await axios.get(
-          `https://api.themoviedb.org/3/search/person?api_key=${API_KEY}&query=${encodeURIComponent(trimmedDirector)}`
-        );
+        const directorResponse = await axios.get(`https://api.themoviedb.org/3/search/person?api_key=${API_KEY}&query=${encodeURIComponent(trimmedDirector)}`);
         const directorResult = directorResponse.data.results.find(person => 
-          person.name.toLowerCase() === trimmedDirector.toLowerCase() || 
-          person.known_for_department.toLowerCase().includes("directing")
+          person.name.toLowerCase() === trimmedDirector.toLowerCase() || person.known_for_department.toLowerCase().includes("directing")
         );
         directorId = directorResult?.id || '';
         if (directorId) {
-          const creditsResponse = await axios.get(
-            `https://api.themoviedb.org/3/person/${directorId}/movie_credits?api_key=${API_KEY}`
-          );
+          const creditsResponse = await axios.get(`https://api.themoviedb.org/3/person/${directorId}/movie_credits?api_key=${API_KEY}`);
           directedMovies = creditsResponse.data.crew
             .filter(credit => credit.job === "Director")
             .map(credit => credit.id)
             .map(async (movieId) => {
               try {
-                const detailsResponse = await axios.get(
-                  `https://api.themoviedb.org/3/movie/${movieId}?api_key=${API_KEY}&append_to_response=credits`
-                );
-                const directors = detailsResponse.data.credits.crew
-                  .filter(crew => crew.job === "Director")
-                  .map(d => d.id);
+                const detailsResponse = await axios.get(`https://api.themoviedb.org/3/movie/${movieId}?api_key=${API_KEY}&append_to_response=credits`);
+                const directors = detailsResponse.data.credits.crew.filter(crew => crew.job === "Director").map(d => d.id);
                 if (directors.length > 0 && directors.includes(parseInt(directorId))) {
                   return {
                     id: movieId,
@@ -210,12 +196,8 @@ function App() {
       let allResults = directedMovies;
       if (!trimmedDirector) {
         const genreId = genres.find(g => g.name.toLowerCase() === genre.toLowerCase())?.id || '';
-        const decadeFilter = decade 
-          ? `&primary_release_date.gte=${decade}-01-01&primary_release_date.lte=${parseInt(decade) + 9}-12-31` 
-          : '';
-        const languageFilter = language 
-          ? `&with_original_language=${languageMap[language.toLowerCase()] || language.toLowerCase()}` 
-          : '';
+        const decadeFilter = decade ? `&primary_release_date.gte=${decade}-01-01&primary_release_date.lte=${parseInt(decade) + 9}-12-31` : '';
+        const languageFilter = language ? `&with_original_language=${languageMap[language.toLowerCase()] || language.toLowerCase()}` : '';
         const actorFilter = actorId ? `&with_cast=${actorId}` : '';
         const durationFilter = {
           'short': '&with_runtime.lte=90',
@@ -236,9 +218,7 @@ function App() {
       const moviesWithDetails = await Promise.all(
         allResults.map(async (movie) => {
           try {
-            const detailsResponse = await axios.get(
-              `https://api.themoviedb.org/3/movie/${movie.id}?api_key=${API_KEY}&append_to_response=credits`
-            );
+            const detailsResponse = await axios.get(`https://api.themoviedb.org/3/movie/${movie.id}?api_key=${API_KEY}&append_to_response=credits`);
             return {
               ...movie,
               runtime: detailsResponse.data.runtime || 0,
@@ -257,12 +237,8 @@ function App() {
       const filteredResults = validMovies.filter(movie => {
         const runtime = movie.runtime || 0;
         const matchesGenre = genre ? movie.genres.includes(genreId) : true;
-        const matchesDecade = decade 
-          ? (movie.release_date && movie.release_date.substring(0, 4) >= decade && movie.release_date.substring(0, 4) <= parseInt(decade) + 9) 
-          : true;
-        const matchesLanguage = language 
-          ? (movie.original_language === languageMap[language.toLowerCase()] || movie.original_language === language.toLowerCase()) 
-          : true;
+        const matchesDecade = decade ? (movie.release_date && movie.release_date.substring(0, 4) >= decade && movie.release_date.substring(0, 4) <= parseInt(decade) + 9) : true;
+        const matchesLanguage = language ? (movie.original_language === languageMap[language.toLowerCase()] || movie.original_language === language.toLowerCase()) : true;
         const matchesActor = actorId ? movie.cast.includes(parseInt(actorId)) : true;
         const matchesDuration = duration.toLowerCase() === 'short' ? runtime > 0 && runtime <= 90 :
                                duration.toLowerCase() === 'medium' ? runtime >= 90 && runtime <= 120 :
@@ -271,11 +247,7 @@ function App() {
       }).slice(0, 16);
 
       if (filteredResults.length === 0) {
-        setRecommendations([{ 
-          id: null, 
-          Poster: null, 
-          Title: 'No movies found matching your criteria. Try adjusting your preferences.' 
-        }]);
+        setRecommendations([{ id: null, Poster: null, Title: 'No movies found matching your criteria. Try adjusting your preferences.' }]);
       } else {
         setRecommendations(filteredResults.map(movie => ({
           id: movie.id,
@@ -285,11 +257,7 @@ function App() {
       }
     } catch (error) {
       console.error('Error in getRecommendations:', error);
-      setRecommendations([{ 
-        id: null, 
-        Poster: null, 
-        Title: 'Error loading recommendations. Please try again later.' 
-      }]);
+      setRecommendations([{ id: null, Poster: null, Title: 'Error loading recommendations. Please try again later.' }]);
     } finally {
       setIsLoading(false);
     }
@@ -298,12 +266,8 @@ function App() {
   const fetchMovieDetails = async (movieId) => {
     try {
       const timestamp = new Date().getTime();
-      const detailsResponse = await axios.get(
-        `https://api.themoviedb.org/3/movie/${movieId}?api_key=${API_KEY}&_=${timestamp}`
-      );
-      const videosResponse = await axios.get(
-        `https://api.themoviedb.org/3/movie/${movieId}/videos?api_key=${API_KEY}&_=${timestamp}`
-      );
+      const detailsResponse = await axios.get(`https://api.themoviedb.org/3/movie/${movieId}?api_key=${API_KEY}&_=${timestamp}`);
+      const videosResponse = await axios.get(`https://api.themoviedb.org/3/movie/${movieId}/videos?api_key=${API_KEY}&_=${timestamp}`);
 
       if (detailsResponse.data.id !== movieId) {
         throw new Error(`Movie ID mismatch: requested ${movieId}, received ${detailsResponse.data.id}`);
@@ -313,16 +277,6 @@ function App() {
       let subscriptionMessage = null;
       try {
         // Placeholder for JustWatch API - replace with actual implementation if available
-        // const justWatchResponse = await axios.get(`https://api.justwatch.com/content/titles/movie/${movieId}/locale/en_US`);
-        // const offers = justWatchResponse.data.offers || [];
-        // watchOption = offers.find(offer => offer.monetization_type === 'rent' || offer.monetization_type === 'buy');
-        // if (!watchOption) {
-        //   const subscriptionOption = offers.find(offer => offer.monetization_type === 'flatrate');
-        //   if (subscriptionOption) {
-        //     const providerName = subscriptionOption.provider_id === 8 ? 'Netflix' : 'a subscription service';
-        //     subscriptionMessage = `Available on ${providerName} (subscription required).`;
-        //   }
-        // }
       } catch (justWatchError) {
         console.error('Error fetching JustWatch data:', justWatchError);
       }
@@ -370,11 +324,13 @@ function App() {
     }
   };
 
-  // Helper function to generate movie URL (customize as needed)
   const getMovieUrl = (movieId) => `https://filmseeker-app.vercel.app/movie/${movieId}`;
 
-  // Social media sharing functions
   const shareOnX = (movie) => {
+    if (!movie || !movie.title || !movie.id) {
+      alert('Error: Movie data is not available for sharing.');
+      return;
+    }
     const text = `Check out this movie: ${movie.title}`;
     const url = getMovieUrl(movie.id);
     const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
@@ -382,12 +338,20 @@ function App() {
   };
 
   const shareOnFacebook = (movie) => {
+    if (!movie || !movie.id) {
+      alert('Error: Movie data is not available for sharing.');
+      return;
+    }
     const url = getMovieUrl(movie.id);
     const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
     window.open(shareUrl, '_blank');
   };
 
   const shareOnWhatsApp = (movie) => {
+    if (!movie || !movie.title || !movie.id) {
+      alert('Error: Movie data is not available for sharing.');
+      return;
+    }
     const text = `Check out this movie: ${movie.title}`;
     const url = getMovieUrl(movie.id);
     const shareUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text + ' ' + url)}`;
@@ -395,6 +359,10 @@ function App() {
   };
 
   const shareOnInstagram = (movie) => {
+    if (!movie || !movie.title || !movie.overview) {
+      alert('Error: Movie data is not available for sharing.');
+      return;
+    }
     const text = `Check out this movie: ${movie.title} - ${movie.overview.substring(0, 100)}...`;
     navigator.clipboard.writeText(text).then(() => {
       alert('Message copied to clipboard! Paste it into Instagram to share.');
@@ -403,7 +371,6 @@ function App() {
     });
   };
 
-  // Functions for About Us pop-up
   const openAboutUs = () => {
     setShowAboutUs(true);
   };
@@ -412,9 +379,37 @@ function App() {
     setShowAboutUs(false);
   };
 
+  const openMessagePopup = () => {
+    setShowMessagePopup(true);
+  };
+
+  const closeMessagePopup = () => {
+    setShowMessagePopup(false);
+    setMessage('');
+  };
+
+  const sendMessage = async () => {
+    if (message.trim()) {
+      try {
+        // Add the message to Firestore in a collection called "messages"
+        await addDoc(collection(db, 'messages'), {
+          message: message,
+          timestamp: serverTimestamp(), // Adds a server-side timestamp
+        });
+        alert('Message sent successfully! It has been saved.');
+        console.log('Message saved to Firestore');
+        closeMessagePopup();
+      } catch (error) {
+        console.error('Error saving message to Firestore:', error);
+        alert('Failed to send message. Please try again.');
+      }
+    } else {
+      alert('Please enter a message before sending.');
+    }
+  };
+
   return (
     <div className="App">
-      {/* Clickable Logo */}
       <img
         src={logo}
         alt="FilmSeeker Logo"
@@ -423,7 +418,6 @@ function App() {
         onClick={openAboutUs}
       />
 
-      {/* About Us Pop-Up */}
       {showAboutUs && (
         <div className="modal" onClick={closeAboutUs}>
           <div className="modal-content about-us-modal" onClick={(e) => e.stopPropagation()}>
@@ -471,24 +465,32 @@ function App() {
             </p>
             <p>Enjoy the Films.</p>
             <div className="modal-buttons">
-            <a
-  href="mailto:artmediagb@gmail.com"
-  className="message-button"
-  title="Send us an email"
-  style={{
-    display: 'inline-block',
-    padding: '10px 20px',
-    backgroundColor: '#a3bffa',
-    color: '#ffffff',
-    textDecoration: 'none',
-    borderRadius: '5px',
-    fontWeight: 'bold',
-    cursor: 'pointer',
-  }}
->
-  Message
-</a>
+              <button onClick={openMessagePopup} className="message-button" title="Send us a message">
+                Message
+              </button>
               <button className="close-button" onClick={closeAboutUs}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showMessagePopup && (
+        <div className="modal" onClick={closeMessagePopup}>
+          <div className="modal-content message-modal" onClick={(e) => e.stopPropagation()}>
+            <h2>Send Us a Message</h2>
+            <textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Type your message here..."
+              className="message-input"
+            />
+            <div className="modal-buttons">
+              <button onClick={sendMessage} className="send-button">
+                Send It
+              </button>
+              <button onClick={closeMessagePopup} className="close-button">
+                Cancel
+              </button>
             </div>
           </div>
         </div>
@@ -519,6 +521,16 @@ function App() {
           </div>
         </div>
       )}
+
+      <div className="film-of-the-month-button-container">
+        <button
+          onClick={() => setShowMovieOfTheMonth(true)}
+          className="film-of-the-month-button"
+        >
+          Film Of The Month
+        </button>
+      </div>
+
       <h1>Add your Preferences</h1>
       <div className="input-container">
         <div className="input-group">
@@ -618,7 +630,6 @@ function App() {
         )}
       </div>
 
-      {/* Movie of the Month Pop-Up */}
       {showMovieOfTheMonth && movieOfTheMonthDetails && (
         <div className="modal" onClick={closeMovieOfTheMonth}>
           <div className="modal-content movie-of-the-month-modal" onClick={(e) => e.stopPropagation()}>
@@ -665,7 +676,6 @@ function App() {
         </div>
       )}
 
-      {/* Movie Details Modal with Sharing Buttons */}
       {selectedMovie && movieDetails && (
         <div className="modal" onClick={closeModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -700,7 +710,6 @@ function App() {
                 ) : (
                   <p>No affordable rental option available at this time.</p>
                 )}
-                {/* Social Media Sharing Buttons with Icons */}
                 <div className="share-buttons">
                   <img
                     src={xIcon}
@@ -733,7 +742,6 @@ function App() {
         </div>
       )}
 
-      {/* Floating Tip Button */}
       <a
         href="https://your-payment-link.com" // Replace with your actual payment link
         target="_blank"
