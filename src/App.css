@@ -70,10 +70,10 @@ h1 {
 .input-container {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+  gap: 30px; /* Increased from 20px for more spacing between filters */
   background: rgba(25, 35, 70, 0.5);
   backdrop-filter: blur(12px);
-  padding: 30px;
+  padding: 40px; /* Increased from 30px for a more spacious feel */
   border-radius: 15px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
   width: 80%;
@@ -84,7 +84,7 @@ h1 {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 10px;
+  padding: 15px; /* Increased from 10px for more internal spacing */
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
@@ -95,9 +95,11 @@ h1 {
 
 .button-group {
   display: flex;
-  justify-content: center;
+  flex-direction: row; /* Ensure buttons are in a row */
+  justify-content: center; /* Center the buttons */
   align-items: center;
   padding: 10px;
+  gap: 40px; /* Alternative to margin-left, ensures consistent spacing */
 }
 
 .input-group img {
@@ -108,7 +110,7 @@ h1 {
 }
 
 label {
-  font-size: 1.2em;
+  font-size: 1.4em;
   color: #d1d5db;
   margin-bottom: 8px;
   font-weight: 600;
@@ -136,24 +138,20 @@ input:focus, select:focus {
 button {
   padding: 12px 30px;
   font-size: 1.3em;
-  background: linear-gradient(90deg, #a3bffa, #6b7280);
-  color: #ffffff;
+  background: linear-gradient(90deg, #f5c518, #ff6f61); /* Bright gold to vibrant coral */
+  color: #1f2937; /* Dark text for better contrast */
   border: none;
   border-radius: 25px;
   cursor: pointer;
   transition: all 0.4s ease;
   outline: none;
+  box-shadow: 0 4px 15px rgba(245, 197, 24, 0.4); /* Subtle gold glow */
 }
 
 button:hover {
-  background: linear-gradient(90deg, #6b7280, #4b5563);
+  background: linear-gradient(90deg, #e0b015, #e65a4f); /* Slightly darker gold and coral */
   transform: translateY(-3px);
-  box-shadow: none;
-}
-
-button:focus {
-  outline: none;
-  box-shadow: none;
+  box-shadow: 0 6px 20px rgba(245, 197, 24, 0.6); /* Stronger glow on hover */
 }
 
 .recommendation {
@@ -451,8 +449,10 @@ button:focus {
 }
 
 .button-disabled {
-  opacity: 0.6;
+  background: linear-gradient(90deg, #b0a012, #b3493e); /* Darker version of the gradient */
+  opacity: 0.7; /* Slightly less faded than before */
   cursor: not-allowed;
+  box-shadow: none; /* Remove glow when disabled */
 }
 
 .error-message {
@@ -532,14 +532,14 @@ button:focus {
 
 /* Film Of The Month Button Styles */
 .film-of-the-month-button-container {
-  margin: 20px 0;
+  margin: 40px 0; /* Increased from 20px for more separation */
   text-align: center;
 }
 
 .film-of-the-month-button {
-  padding: 12px 30px;
-  font-size: 1.3em;
-  background: linear-gradient(90deg, #d4af37, #a3bffa);
+  padding: 13px 33px; /* Increased by 10% from 12px 30px */
+  font-size: 1.4em; /* Increased by 10% from 1.3em */
+  background: linear-gradient(90deg, #d4af37, #a3bffa); /* Reverted to original gradient */
   color: #1f2937;
   border: none;
   border-radius: 25px;
@@ -549,9 +549,35 @@ button:focus {
 }
 
 .film-of-the-month-button:hover {
-  background: linear-gradient(90deg, #a3bffa, #d4af37);
+  background: linear-gradient(90deg, #a3bffa, #d4af37); /* Reverse gradient on hover */
   transform: translateY(-3px);
   box-shadow: 0 6px 20px rgba(212, 175, 55, 0.6);
+}
+
+/* Surprise Me Button Styles */
+.surprise-button {
+  padding: 12px 30px;
+  font-size: 1.3em;
+  background: linear-gradient(90deg, #ff6f61, #a3bffa); /* Vibrant coral to light blue */
+  color: #1f2937;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: all 0.4s ease;
+  box-shadow: 0 4px 15px rgba(255, 111, 97, 0.4); /* Subtle coral glow */
+}
+
+.surprise-button:hover {
+  background: linear-gradient(90deg, #a3bffa, #ff6f61); /* Reverse gradient on hover */
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(255, 111, 97, 0.6); /* Stronger glow on hover */
+}
+
+.surprise-button.button-disabled {
+  background: linear-gradient(90deg, #b3493e, #8b9ec0); /* Darker version of the gradient */
+  opacity: 0.7;
+  cursor: not-allowed;
+  box-shadow: none;
 }
 
 /* Tablet Adjustments (max-width: 768px) */
@@ -578,8 +604,8 @@ button:focus {
 
   .input-container {
     grid-template-columns: 1fr;
-    gap: 8px;
-    padding: 10px;
+    gap: 12px; /* Increased from 8px for better spacing */
+    padding: 20px; /* Increased from 10px for more spacious feel */
     width: 90%;
     max-height: 60vh;
     overflow-y: auto;
@@ -612,6 +638,11 @@ button:focus {
   }
 
   .film-of-the-month-button {
+    padding: 8.8px 22px; /* 10% increase from 8px 20px */
+    font-size: 1.1em; /* 10% increase from 1em */
+  }
+
+  .surprise-button {
     padding: 8px 20px;
     font-size: 1em;
   }
@@ -714,8 +745,12 @@ button:focus {
   }
 
   .input-container {
-    padding: 8px;
+    padding: 15px; /* Increased from 8px for more spacious feel */
     max-height: 55vh;
+  }
+
+  .input-group {
+    padding: 3px;
   }
 
   .input-group img {
@@ -738,6 +773,11 @@ button:focus {
   }
 
   .film-of-the-month-button {
+    padding: 6.6px 16.5px; /* 10% increase from 6px 15px */
+    font-size: 0.99em; /* 10% increase from 0.9em, rounded to 0.99em */
+  }
+
+  .surprise-button {
     padding: 6px 15px;
     font-size: 0.9em;
   }
