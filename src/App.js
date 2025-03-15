@@ -17,7 +17,6 @@ import instagramIcon from './instagram-icon.png';
 import tipIcon from './tip-icon.png';
 
 function App() {
-  // [Existing state declarations unchanged]
   const [genre, setGenre] = useState('');
   const [duration, setDuration] = useState('');
   const [decade, setDecade] = useState('');
@@ -70,7 +69,6 @@ function App() {
     return `https://moviesanywhere.com/movie/${slug}?show=retailers`;
   };
 
-  // [Existing useEffect and functions unchanged up to fetchMovieDetails]
   useEffect(() => {
     const fetchTrendingFilms = async () => {
       try {
@@ -531,7 +529,6 @@ function App() {
         onClick={openAboutUs}
       />
 
-      {/* [Existing About Us Modal unchanged] */}
       {showAboutUs && (
         <div className="modal" onClick={closeAboutUs}>
           <div
@@ -623,7 +620,6 @@ function App() {
         </div>
       )}
 
-      {/* [Existing Message Popup unchanged] */}
       {showMessagePopup && (
         <div className="modal" onClick={closeMessagePopup}>
           <div
@@ -649,7 +645,6 @@ function App() {
         </div>
       )}
 
-      {/* [Trending Films unchanged] */}
       {trendingFilms.length > 0 && (
         <div className="trending-section">
           <div className="trending-container">
@@ -676,7 +671,6 @@ function App() {
         </div>
       )}
 
-      {/* [Film of the Month Button unchanged] */}
       <div className="film-of-the-month-button-container">
         <button
           onClick={() => setShowMovieOfTheMonth(true)}
@@ -686,7 +680,6 @@ function App() {
         </button>
       </div>
 
-      {/* [Preferences Form unchanged] */}
       <h1>Add your Preferences</h1>
       <div className="input-container">
         <div className="input-group">
@@ -761,7 +754,6 @@ function App() {
         </div>
       </div>
 
-      {/* [Buttons unchanged] */}
       <div className="input-group button-group">
         <button
           onClick={getRecommendations}
@@ -780,7 +772,6 @@ function App() {
         </button>
       </div>
 
-      {/* [Recommendations unchanged] */}
       <div className="recommendation">
         {isLoading ? (
           <div className="spinner"></div>
@@ -804,7 +795,6 @@ function App() {
         )}
       </div>
 
-      {/* [Film of the Month Modal unchanged] */}
       {showMovieOfTheMonth && movieOfTheMonthDetails && (
         <div className="modal" onClick={closeMovieOfTheMonth}>
           <div
@@ -879,7 +869,6 @@ function App() {
         </div>
       )}
 
-      {/* Movie Details Modal with "Watch Now" and Disclaimer */}
       {selectedMovie && movieDetails && (
         <div className="modal" onClick={closeModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -958,7 +947,6 @@ function App() {
         </div>
       )}
 
-      {/* [Tip Button unchanged] */}
       <a
         href="https://buymeacoffee.com/filmseeker"
         target="_blank"
