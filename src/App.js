@@ -16,31 +16,33 @@ import whatsappIcon from './whatsapp-icon.png';
 import instagramIcon from './instagram-icon.png';
 import tipIcon from './tip-icon.png';
 
+// Helper function to convert a string to a URL-friendly slug
+const slugify = (text) => {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')       // Replace spaces with -
+    .replace(/[^\w\-]+/g, '')   // Remove all non-word chars
+    .replace(/\-\-+/g, '-');    // Replace multiple - with single -
+};
+
 function App() {
-  // User preference states
   const [genre, setGenre] = useState('');
   const [duration, setDuration] = useState('');
   const [decade, setDecade] = useState('');
   const [language, setLanguage] = useState('');
   const [actor, setActor] = useState('');
   const [director, setDirector] = useState('');
-
-  // Data states
   const [recommendations, setRecommendations] = useState([]);
   const [trendingFilms, setTrendingFilms] = useState([]);
   const [genres, setGenres] = useState([]);
-
-  // Modal / UI states
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [movieDetails, setMovieDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-
-  // Film of the Month states (using filmOfTheMonth.json)
   const [showMovieOfTheMonth, setShowMovieOfTheMonth] = useState(false);
   const [movieOfTheMonthDetails, setMovieOfTheMonthDetails] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
-
-  // “About Us” modal and Message popup
   const [showAboutUs, setShowAboutUs] = useState(false);
   const [showMessagePopup, setShowMessagePopup] = useState(false);
   const [message, setMessage] = useState('');
@@ -77,7 +79,9 @@ function App() {
   useEffect(() => {
     const fetchTrendingFilms = async () => {
       try {
-        const response = await axios.get(`https://api.themoviedb.org/3/trending/movie/week?api_key=${API_KEY}`);
+        const response = await axios.get(
+          `https://api.themoviedb.org/3/trending/movie/week?api_key=${API_KEY}`
+        );
         const trending = response.data.results.slice(0, 3).map((movie) => ({
           id: movie.id,
           Poster: movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : null,
@@ -91,7 +95,6 @@ function App() {
 
     const fetchFilmOfTheMonth = async () => {
       try {
-        // filmOfTheMonth.json should be in the public folder
         const response = await fetch('/filmOfTheMonth.json');
         const data = await response.json();
         const movieId = data.id;
@@ -117,14 +120,15 @@ function App() {
 
     const fetchGenres = async () => {
       try {
-        const response = await axios.get(`https://api.themoviedb.org/3/genre/movie/list?api_key=${API_KEY}`);
+        const response = await axios.get(
+          `https://api.themoviedb.org/3/genre/movie/list?api_key=${API_KEY}`
+        );
         setGenres(response.data.genres);
       } catch (error) {
         console.error('Error fetching genres:', error);
       }
     };
 
-    // Clear preferences on load
     localStorage.clear();
     setGenre('');
     setDuration('');
@@ -148,7 +152,7 @@ function App() {
   }, [genre, duration, decade, language, actor, director]);
 
   // ---------------------------
-  //   getRecommendations (Updated)
+  //   getRecommendations (Updated for 16 suggestions)
   // ---------------------------
   const getRecommendations = async () => {
     setIsLoading(true);
@@ -172,7 +176,6 @@ function App() {
     }
 
     try {
-      // 1) Get actor ID if provided
       let actorId = '';
       if (trimmedActor) {
         const actorResponse = await axios.get(
@@ -181,7 +184,6 @@ function App() {
         actorId = actorResponse.data.results[0]?.id || '';
       }
 
-      // 2) If a director is provided, get director's filmography
       let directedMovies = [];
       let directorId = '';
       if (trimmedDirector) {
@@ -235,7 +237,6 @@ function App() {
         }
       }
 
-      // 3) If no director provided, use discover endpoint
       let allResults = directedMovies;
       if (!trimmedDirector) {
         const genreId = genres.find((g) => g.name.toLowerCase() === genre.toLowerCase())?.id || '';
@@ -262,10 +263,9 @@ function App() {
         }
       }
 
-      // 4) For each movie in allResults, fetch details (if not already fetched)
       const moviesWithDetails = await Promise.all(
         allResults.map(async (movie) => {
-          if (movie.runtime) return movie; // Already detailed from director branch
+          if (movie.runtime) return movie;
           try {
             const detailsResponse = await axios.get(
               `https://api.themoviedb.org/3/movie/${movie.id}?api_key=${API_KEY}&append_to_response=credits`
@@ -306,7 +306,7 @@ function App() {
           : true;
         const matchesActor = actorId ? movie.cast.includes(parseInt(actorId)) : true;
         return matchesDuration && matchesDecade && matchesGenre && matchesLanguage && matchesActor;
-      }).slice(0, 10);
+      }).slice(0, 16);  // Changed from 10 to 16
 
       if (filteredResults.length === 0) {
         setRecommendations([{ id: null, Poster: null, Title: 'No movies found matching your criteria. Try adjusting your preferences.' }]);
@@ -333,7 +333,9 @@ function App() {
     setRecommendations([]);
     try {
       const randomPage = Math.floor(Math.random() * 500) + 1;
-      const response = await axios.get(`https://api.themoviedb.org/3/discover/movie?api_key=${API_KEY}&sort_by=popularity.desc&page=${randomPage}`);
+      const response = await axios.get(
+        `https://api.themoviedb.org/3/discover/movie?api_key=${API_KEY}&sort_by=popularity.desc&page=${randomPage}`
+      );
       const movies = response.data.results;
       if (movies.length > 0) {
         const randomMovie = movies[Math.floor(Math.random() * movies.length)];
@@ -361,12 +363,18 @@ function App() {
   const fetchMovieDetails = async (movieId) => {
     try {
       const timestamp = new Date().getTime();
-      const detailsResponse = await axios.get(`https://api.themoviedb.org/3/movie/${movieId}?api_key=${API_KEY}&_=${timestamp}`);
-      const videosResponse = await axios.get(`https://api.themoviedb.org/3/movie/${movieId}/videos?api_key=${API_KEY}&_=${timestamp}`);
+      const detailsResponse = await axios.get(
+        `https://api.themoviedb.org/3/movie/${movieId}?api_key=${API_KEY}&_=${timestamp}`
+      );
+      const videosResponse = await axios.get(
+        `https://api.themoviedb.org/3/movie/${movieId}/videos?api_key=${API_KEY}&_=${timestamp}`
+      );
       if (detailsResponse.data.id !== movieId) {
         throw new Error(`Movie ID mismatch: requested ${movieId}, received ${detailsResponse.data.id}`);
       }
-      const trailer = videosResponse.data.results.find(video => video.type === 'Trailer' && video.site === 'YouTube');
+      const trailer = videosResponse.data.results.find(
+        (video) => video.type === 'Trailer' && video.site === 'YouTube'
+      );
       setMovieDetails({
         ...detailsResponse.data,
         trailerKey: trailer ? trailer.key : null,
@@ -406,7 +414,9 @@ function App() {
     }
   };
 
-  // Social Sharing
+  // ---------------------------
+  //   Social Sharing
+  // ---------------------------
   const getMovieUrl = (movieId) => `https://filmseeker-app.vercel.app/movie/${movieId}`;
 
   const shareOnX = (movie) => {
@@ -454,6 +464,9 @@ function App() {
     });
   };
 
+  // ---------------------------
+  //   About Us Modal
+  // ---------------------------
   const openAboutUs = () => {
     setShowAboutUs(true);
   };
@@ -462,6 +475,9 @@ function App() {
     setShowAboutUs(false);
   };
 
+  // ---------------------------
+  //   Message Popup
+  // ---------------------------
   const openMessagePopup = () => {
     setShowMessagePopup(true);
   };
@@ -500,6 +516,7 @@ function App() {
         onClick={openAboutUs}
       />
 
+      {/* About Us Modal */}
       {showAboutUs && (
         <div className="modal" onClick={closeAboutUs}>
           <div className="modal-content about-us-modal" onClick={(e) => e.stopPropagation()}>
@@ -558,6 +575,7 @@ function App() {
         </div>
       )}
 
+      {/* Message Popup */}
       {showMessagePopup && (
         <div className="modal" onClick={closeMessagePopup}>
           <div className="modal-content message-modal" onClick={(e) => e.stopPropagation()}>
@@ -580,6 +598,7 @@ function App() {
         </div>
       )}
 
+      {/* Trending Films */}
       {trendingFilms.length > 0 && (
         <div className="trending-section">
           <div className="trending-container">
@@ -606,12 +625,14 @@ function App() {
         </div>
       )}
 
+      {/* Film of the Month Button */}
       <div className="film-of-the-month-button-container">
         <button onClick={() => setShowMovieOfTheMonth(true)} className="film-of-the-month-button">
           Film Of The Month
         </button>
       </div>
 
+      {/* Preferences Form */}
       <h1>Add your Preferences</h1>
       <div className="input-container">
         <div className="input-group">
@@ -678,6 +699,7 @@ function App() {
         </div>
       </div>
 
+      {/* Buttons */}
       <div className="input-group button-group">
         <button onClick={getRecommendations} disabled={isLoading} className={isLoading ? 'button-disabled' : ''}>
           {isLoading ? 'Loading...' : 'Get My Film!'}
@@ -687,6 +709,7 @@ function App() {
         </button>
       </div>
 
+      {/* Recommendations */}
       <div className="recommendation">
         {isLoading ? (
           <div className="spinner"></div>
@@ -705,13 +728,24 @@ function App() {
         )}
       </div>
 
+      {/* Movie of the Month Modal */}
       {showMovieOfTheMonth && movieOfTheMonthDetails && (
         <div className="modal" onClick={closeMovieOfTheMonth}>
           <div className="modal-content movie-of-the-month-modal" onClick={(e) => e.stopPropagation()}>
             {!showDetails ? (
               <div className="movie-of-the-month-container">
                 <h2>Our Movie of the Month</h2>
-                <img src={movieOfTheMonthDetails.poster_path ? `https://image.tmdb.org/t/p/w500${movieOfTheMonthDetails.poster_path}` : 'https://via.placeholder.com/300x450?text=No+Poster'} alt={`${movieOfTheMonthDetails.title} Poster`} className="movie-of-the-month-poster" onClick={toggleDetails} onError={(e) => { e.target.src = 'https://via.placeholder.com/300x450?text=No+Poster'; }} />
+                <img
+                  src={
+                    movieOfTheMonthDetails.poster_path
+                      ? `https://image.tmdb.org/t/p/w500${movieOfTheMonthDetails.poster_path}`
+                      : 'https://via.placeholder.com/300x450?text=No+Poster'
+                  }
+                  alt={`${movieOfTheMonthDetails.title} Poster`}
+                  className="movie-of-the-month-poster"
+                  onClick={toggleDetails}
+                  onError={(e) => { e.target.src = 'https://via.placeholder.com/300x450?text=No+Poster'; }}
+                />
               </div>
             ) : (
               <>
@@ -721,7 +755,12 @@ function App() {
                 ) : (
                   <>
                     {movieOfTheMonthDetails.poster_path && (
-                      <img src={`https://image.tmdb.org/t/p/w200${movieOfTheMonthDetails.poster_path}`} alt={`${movieOfTheMonthDetails.title} Poster`} className="modal-poster" onError={(e) => { e.target.src = 'https://via.placeholder.com/200x300?text=No+Poster'; }} />
+                      <img
+                        src={`https://image.tmdb.org/t/p/w200${movieOfTheMonthDetails.poster_path}`}
+                        alt={`${movieOfTheMonthDetails.title} Poster`}
+                        className="modal-poster"
+                        onError={(e) => { e.target.src = 'https://via.placeholder.com/200x300?text=No+Poster'; }}
+                      />
                     )}
                     <h3>
                       {movieOfTheMonthDetails.title} (
@@ -746,6 +785,7 @@ function App() {
         </div>
       )}
 
+      {/* Movie Details Modal */}
       {selectedMovie && movieDetails && (
         <div className="modal" onClick={closeModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -765,11 +805,29 @@ function App() {
                 </h2>
                 <p className="rating">Rating: {movieDetails.vote_average}/10</p>
                 <p className="overview">{movieDetails.overview}</p>
+                {/* Watch Trailer Button */}
                 {movieDetails.trailerKey && (
                   <button className="trailer-button" onClick={playTrailer}>
                     Watch Trailer
                   </button>
                 )}
+                {/* New Watch Now Button */}
+                <button
+                  className="watch-now-button"
+                  onClick={() =>
+                    window.open(
+                      `https://moviesanywhere.com/movie/${slugify(movieDetails.title)}?show=retailers`,
+                      '_blank'
+                    )
+                  }
+                  style={{ marginLeft: '10px' }}
+                >
+                  Watch Now
+                </button>
+                {/* Disclaimer for Movies Anywhere */}
+                <p className="disclaimer" style={{ fontSize: '0.8em', marginTop: '5px', color: '#d1d5db' }}>
+                  Note: Some movies may not be available on Movies Anywhere.
+                </p>
                 <div className="share-buttons">
                   <img src={xIcon} alt="Share on X" className="share-icon" onClick={() => shareOnX(movieDetails)} />
                   <img src={facebookIcon} alt="Share on Facebook" className="share-icon" onClick={() => shareOnFacebook(movieDetails)} />
@@ -782,7 +840,14 @@ function App() {
         </div>
       )}
 
-      <a href="https://buymeacoffee.com/filmseeker" target="_blank" rel="noopener noreferrer" className="tip-button" aria-label="Send a tip to support FilmSeeker">
+      {/* Tip Button */}
+      <a
+        href="https://buymeacoffee.com/filmseeker"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="tip-button"
+        aria-label="Send a tip to support FilmSeeker"
+      >
         <img src={tipIcon} alt="Tip Icon" className="tip-icon" />
       </a>
     </div>
