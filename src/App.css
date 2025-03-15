@@ -139,7 +139,8 @@ input:focus, select:focus {
 button,
 .trailer-button,
 .send-button,
-.surprise-button {
+.surprise-button,
+.watch-now-button {
   padding: 12px 30px;
   font-size: 1.3em;
   background: #25FDE9 !important;
@@ -155,7 +156,8 @@ button,
 button:hover,
 .trailer-button:hover,
 .send-button:hover,
-.surprise-button:hover {
+.surprise-button:hover,
+.watch-now-button:hover {
   background: #25FDE9 !important;
   transform: translateY(-3px);
   box-shadow: 0 6px 20px rgba(37, 253, 233, 0.6);
@@ -165,6 +167,20 @@ button:hover,
   padding: 12px 25px;
   font-size: 1.1em;
   border-radius: 8px;
+}
+
+.watch-now-button {
+  padding: 12px 25px; /* Matches trailer button for modal consistency */
+  font-size: 1.1em;
+  border-radius: 8px;
+}
+
+/* Modal Buttons Container */
+.modal-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 15px; /* Space between trailer and watch now buttons */
+  margin-top: 20px;
 }
 
 /* ------------------------------ */
@@ -577,6 +593,10 @@ button:hover,
     padding: 8px 20px;
     font-size: 1em;
   }
+  .watch-now-button {
+    padding: 8px 15px;
+    font-size: 0.9em;
+  }
   .recommendation {
     gap: 8px;
     margin-top: 15px;
@@ -620,6 +640,9 @@ button:hover,
   .trailer-button {
     padding: 8px 15px;
     font-size: 0.9em;
+  }
+  .modal-buttons {
+    gap: 10px;
   }
   .message-modal {
     padding: 20px;
@@ -685,6 +708,10 @@ button:hover,
     padding: 6px 15px;
     font-size: 0.9em;
   }
+  .watch-now-button {
+    padding: 6px 12px;
+    font-size: 0.8em;
+  }
   .poster {
     width: 90px;
   }
@@ -722,6 +749,10 @@ button:hover,
   .trailer-button {
     padding: 6px 12px;
     font-size: 0.8em;
+  }
+  .modal-buttons {
+    gap: 8px;
+    flex-direction: column; /* Stack buttons on very small screens */
   }
   .message-modal {
     padding: 15px;

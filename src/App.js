@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 import axios from 'axios';
-import { db } from './firebase'; // Firestore (if you use it)
+import { db } from './firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import logo from './logo.png';
 import iconGenre from './icon-genre.png';
@@ -17,40 +17,27 @@ import instagramIcon from './instagram-icon.png';
 import tipIcon from './tip-icon.png';
 
 function App() {
-  // User preference states
+  // [Existing state declarations unchanged]
   const [genre, setGenre] = useState('');
   const [duration, setDuration] = useState('');
   const [decade, setDecade] = useState('');
   const [language, setLanguage] = useState('');
   const [actor, setActor] = useState('');
   const [director, setDirector] = useState('');
-
-  // Data states
   const [recommendations, setRecommendations] = useState([]);
   const [trendingFilms, setTrendingFilms] = useState([]);
   const [genres, setGenres] = useState([]);
-
-  // Modal / UI states
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [movieDetails, setMovieDetails] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-
-  // Film of the Month states
   const [showMovieOfTheMonth, setShowMovieOfTheMonth] = useState(false);
   const [movieOfTheMonthDetails, setMovieOfTheMonthDetails] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
-
-  // “About Us” modal
   const [showAboutUs, setShowAboutUs] = useState(false);
-
-  // “Message” modal
   const [showMessagePopup, setShowMessagePopup] = useState(false);
   const [message, setMessage] = useState('');
-
-  // TMDB API key
   const API_KEY = process.env.REACT_APP_TMDB_API_KEY;
 
-  // Language map
   const languageMap = {
     '': '',
     english: 'en',
@@ -73,11 +60,18 @@ function App() {
     indian: 'hi',
   };
 
-  // ---------------------------
-  //   useEffect on Mount
-  // ---------------------------
+  // Helper function to generate Movies Anywhere URL with retailers
+  const getMoviesAnywhereUrl = (title) => {
+    if (!title) return 'https://moviesanywhere.com/';
+    const slug = title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+    return `https://moviesanywhere.com/movie/${slug}?show=retailers`;
+  };
+
+  // [Existing useEffect and functions unchanged up to fetchMovieDetails]
   useEffect(() => {
-    // 1) Fetch Trending Films
     const fetchTrendingFilms = async () => {
       try {
         const response = await axios.get(
@@ -96,15 +90,11 @@ function App() {
       }
     };
 
-    // 2) Fetch Film of the Month from JSON
     const fetchFilmOfTheMonth = async () => {
       try {
-        // This JSON file should be in the public folder
         const response = await fetch('/filmOfTheMonth.json');
         const data = await response.json();
-        const movieId = data.id; // The TMDB ID from the JSON file
-
-        // Force a unique param to bust cache
+        const movieId = data.id;
         const timestamp = new Date().getTime();
         const detailsResponse = await axios.get(
           `https://api.themoviedb.org/3/movie/${movieId}?api_key=${API_KEY}&_=${timestamp}`
@@ -127,7 +117,6 @@ function App() {
       }
     };
 
-    // 3) Fetch Genre List
     const fetchGenres = async () => {
       try {
         const response = await axios.get(
@@ -139,7 +128,6 @@ function App() {
       }
     };
 
-    // 4) Clear local storage (preferences)
     localStorage.clear();
     setGenre('');
     setDuration('');
@@ -148,13 +136,11 @@ function App() {
     setActor('');
     setDirector('');
 
-    // Call them
     fetchTrendingFilms();
     fetchFilmOfTheMonth();
     fetchGenres();
   }, [API_KEY]);
 
-  // Save preferences to localStorage
   useEffect(() => {
     localStorage.setItem('genre', genre);
     localStorage.setItem('duration', duration);
@@ -164,13 +150,9 @@ function App() {
     localStorage.setItem('director', director);
   }, [genre, duration, decade, language, actor, director]);
 
-  // ---------------------------
-  //   getRecommendations
-  // ---------------------------
   const getRecommendations = async () => {
     setIsLoading(true);
     setRecommendations([]);
-
     const trimmedActor = actor.trim();
     const trimmedDirector = director.trim();
     const hasPreferences =
@@ -189,7 +171,6 @@ function App() {
     }
 
     try {
-      // 1) Possibly get an actor ID
       let actorId = '';
       if (trimmedActor) {
         const actorResponse = await axios.get(
@@ -200,7 +181,6 @@ function App() {
         actorId = actorResponse.data.results[0]?.id || '';
       }
 
-      // 2) Possibly get a list of directed movies
       let directedMovies = [];
       let directorId = '';
       if (trimmedDirector) {
@@ -253,7 +233,6 @@ function App() {
         }
       }
 
-      // 3) If no director was specified, do the usual discover approach
       let allResults = directedMovies;
       if (!trimmedDirector) {
         const genreId = genres.find(
@@ -285,7 +264,6 @@ function App() {
         }
       }
 
-      // 4) For each movie, fetch details
       const moviesWithDetails = await Promise.all(
         allResults.map(async (movie) => {
           try {
@@ -305,7 +283,6 @@ function App() {
         })
       );
 
-      // 5) Filter final results
       const genreId = genres.find(
         (g) => g.name.toLowerCase() === genre.toLowerCase()
       )?.id || '';
@@ -318,7 +295,7 @@ function App() {
           if (duration.toLowerCase() === 'medium')
             return runtime >= 90 && runtime <= 120;
           if (duration.toLowerCase() === 'long') return runtime >= 120;
-          return true; // If no duration selected, include all
+          return true;
         })
         .slice(0, 10);
 
@@ -351,13 +328,9 @@ function App() {
     }
   };
 
-  // ---------------------------
-  //   getRandomRecommendation
-  // ---------------------------
   const getRandomRecommendation = async () => {
     setIsLoading(true);
     setRecommendations([]);
-
     try {
       const randomPage = Math.floor(Math.random() * 500) + 1;
       const response = await axios.get(
@@ -394,9 +367,6 @@ function App() {
     }
   };
 
-  // ---------------------------
-  //   fetchMovieDetails
-  // ---------------------------
   const fetchMovieDetails = async (movieId) => {
     try {
       const timestamp = new Date().getTime();
@@ -427,13 +397,11 @@ function App() {
     }
   };
 
-  // Close the modal that shows movie details
   const closeModal = () => {
     setSelectedMovie(null);
     setMovieDetails(null);
   };
 
-  // Play trailer in new tab
   const playTrailer = () => {
     if (movieDetails && movieDetails.trailerKey) {
       window.open(
@@ -443,9 +411,6 @@ function App() {
     }
   };
 
-  // ---------------------------
-  //   Film Of The Month
-  // ---------------------------
   const closeMovieOfTheMonth = () => {
     setShowMovieOfTheMonth(false);
   };
@@ -463,9 +428,6 @@ function App() {
     }
   };
 
-  // ---------------------------
-  //   Social Sharing
-  // ---------------------------
   const getMovieUrl = (movieId) =>
     `https://filmseeker-app.vercel.app/movie/${movieId}`;
 
@@ -526,9 +488,6 @@ function App() {
       });
   };
 
-  // ---------------------------
-  //   About Us Modal
-  // ---------------------------
   const openAboutUs = () => {
     setShowAboutUs(true);
   };
@@ -536,9 +495,6 @@ function App() {
     setShowAboutUs(false);
   };
 
-  // ---------------------------
-  //   Message Popup
-  // ---------------------------
   const openMessagePopup = () => {
     setShowMessagePopup(true);
   };
@@ -575,7 +531,7 @@ function App() {
         onClick={openAboutUs}
       />
 
-      {/* About Us Modal */}
+      {/* [Existing About Us Modal unchanged] */}
       {showAboutUs && (
         <div className="modal" onClick={closeAboutUs}>
           <div
@@ -667,7 +623,7 @@ function App() {
         </div>
       )}
 
-      {/* Message Popup */}
+      {/* [Existing Message Popup unchanged] */}
       {showMessagePopup && (
         <div className="modal" onClick={closeMessagePopup}>
           <div
@@ -693,7 +649,7 @@ function App() {
         </div>
       )}
 
-      {/* Trending Films */}
+      {/* [Trending Films unchanged] */}
       {trendingFilms.length > 0 && (
         <div className="trending-section">
           <div className="trending-container">
@@ -720,7 +676,7 @@ function App() {
         </div>
       )}
 
-      {/* Film of the Month Button */}
+      {/* [Film of the Month Button unchanged] */}
       <div className="film-of-the-month-button-container">
         <button
           onClick={() => setShowMovieOfTheMonth(true)}
@@ -730,7 +686,7 @@ function App() {
         </button>
       </div>
 
-      {/* Preferences Form */}
+      {/* [Preferences Form unchanged] */}
       <h1>Add your Preferences</h1>
       <div className="input-container">
         <div className="input-group">
@@ -805,7 +761,7 @@ function App() {
         </div>
       </div>
 
-      {/* Buttons */}
+      {/* [Buttons unchanged] */}
       <div className="input-group button-group">
         <button
           onClick={getRecommendations}
@@ -824,7 +780,7 @@ function App() {
         </button>
       </div>
 
-      {/* Recommendations */}
+      {/* [Recommendations unchanged] */}
       <div className="recommendation">
         {isLoading ? (
           <div className="spinner"></div>
@@ -848,7 +804,7 @@ function App() {
         )}
       </div>
 
-      {/* Film of the Month Modal */}
+      {/* [Film of the Month Modal unchanged] */}
       {showMovieOfTheMonth && movieOfTheMonthDetails && (
         <div className="modal" onClick={closeMovieOfTheMonth}>
           <div
@@ -923,7 +879,7 @@ function App() {
         </div>
       )}
 
-      {/* Movie Details Modal */}
+      {/* Movie Details Modal with "Watch Now" and Disclaimer */}
       {selectedMovie && movieDetails && (
         <div className="modal" onClick={closeModal}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
@@ -954,11 +910,22 @@ function App() {
                   Rating: {movieDetails.vote_average}/10
                 </p>
                 <p className="overview">{movieDetails.overview}</p>
-                {movieDetails.trailerKey && (
-                  <button className="trailer-button" onClick={playTrailer}>
-                    Watch Trailer
+                <div className="modal-buttons">
+                  {movieDetails.trailerKey && (
+                    <button className="trailer-button" onClick={playTrailer}>
+                      Watch Trailer
+                    </button>
+                  )}
+                  <button
+                    className="watch-now-button"
+                    onClick={() => window.open(getMoviesAnywhereUrl(movieDetails.title), '_blank')}
+                  >
+                    Watch Now
                   </button>
-                )}
+                </div>
+                <p className="disclaimer">
+                  *Availability on Movies Anywhere not guaranteed.
+                </p>
                 <div className="share-buttons">
                   <img
                     src={xIcon}
@@ -991,7 +958,7 @@ function App() {
         </div>
       )}
 
-      {/* Tip Button */}
+      {/* [Tip Button unchanged] */}
       <a
         href="https://buymeacoffee.com/filmseeker"
         target="_blank"
