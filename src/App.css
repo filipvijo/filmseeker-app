@@ -140,7 +140,8 @@ button,
 .trailer-button,
 .send-button,
 .surprise-button,
-.watch-now-button {
+.watch-now-button,
+.dr-filmbot-button {
   padding: 12px 30px;
   font-size: 1.3em;
   background: #25FDE9 !important;
@@ -157,20 +158,16 @@ button:hover,
 .trailer-button:hover,
 .send-button:hover,
 .surprise-button:hover,
-.watch-now-button:hover {
+.watch-now-button:hover,
+.dr-filmbot-button:hover {
   background: #25FDE9 !important;
   transform: translateY(-3px);
   box-shadow: 0 6px 20px rgba(37, 253, 233, 0.6);
 }
 
-.trailer-button {
-  padding: 12px 25px;
-  font-size: 1.1em;
-  border-radius: 8px;
-}
-
+.trailer-button,
 .watch-now-button {
-  padding: 12px 25px; /* Matches trailer button for modal consistency */
+  padding: 12px 25px;
   font-size: 1.1em;
   border-radius: 8px;
 }
@@ -204,9 +201,20 @@ button:hover,
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
+/* Zoom effect for Get My Film and Surprise Me recommendations */
 .recommendation-item:hover {
   transform: scale(1.1);
   box-shadow: 0 8px 20px rgba(163, 191, 250, 0.6);
+}
+
+/* Remove zoom effect for Movie Prescription films */
+.dr-filmbot-response .recommendation-item {
+  cursor: default;
+}
+
+.dr-filmbot-response .recommendation-item:hover {
+  transform: none;
+  box-shadow: none;
 }
 
 /* Generic poster for movies */
@@ -470,6 +478,13 @@ button:hover,
   box-shadow: none;
 }
 
+/* No Recommendations Message */
+.no-recommendations {
+  margin-top: 20px;
+  color: #d1d5db;
+  font-size: 1.1em;
+}
+
 /* Tip Button Styles */
 .tip-button {
   position: fixed;
@@ -538,6 +553,92 @@ button:hover,
   box-shadow: 0 6px 20px rgba(37, 253, 233, 0.6);
 }
 
+/* Dr FilmBot Section Styles */
+.dr-filmbot-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 20px;
+  width: 80%;
+  max-width: 600px;
+}
+
+.dr-filmbot-illustration {
+  width: 200px;
+  height: auto;
+  margin-bottom: 1px; /* Reduced from 20px to bring it closer to the text */
+}
+
+.dr-filmbot-section h2 {
+  color: #a3bffa;
+  font-size: 2em;
+  margin-bottom: 10px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);
+  font-weight: 700;
+}
+
+.dr-filmbot-input-textarea {
+  width: 100%;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  background-color: #333;
+  color: #fff;
+  resize: vertical;
+  margin-top: 10px;
+  font-size: 1em;
+}
+
+.dr-filmbot-button {
+  padding: 12px 30px;
+  font-size: 1.3em;
+  background: #25FDE9 !important;
+  color: #1f2937;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: all 0.4s ease;
+  box-shadow: 0 4px 15px rgba(37, 253, 233, 0.4);
+  margin-top: 20px;
+}
+
+.dr-filmbot-button:hover {
+  background: #25FDE9 !important;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(37, 253, 233, 0.6);
+}
+
+.dr-filmbot-button:disabled {
+  background: #25FDE9 !important;
+  opacity: 0.7;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.dr-filmbot-response {
+  margin-top: 30px;
+  width: 100%;
+  background-color: #222;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: left;
+  color: #d1d5db;
+}
+
+.dr-filmbot-response h3 {
+  font-size: 1.8em;
+  color: #e0e7ff;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.movie-quote {
+  font-style: italic;
+  color: #a3bffa;
+  margin-top: 5px;
+  font-size: 0.9em;
+}
+
 /* Tablet Adjustments (max-width: 768px) */
 @media (max-width: 768px) {
   .tip-button {
@@ -581,7 +682,8 @@ button:hover,
     font-size: 0.8em;
     max-width: 100%;
   }
-  button {
+  button,
+  .dr-filmbot-button {
     padding: 6px 18px;
     font-size: 0.9em;
   }
@@ -659,6 +761,23 @@ button:hover,
   .movie-of-the-month-poster {
     width: 200px;
   }
+  .dr-filmbot-section {
+    width: 90%;
+  }
+  .dr-filmbot-input-textarea {
+    font-size: 14px;
+  }
+  .dr-filmbot-button {
+    width: 100%;
+    padding: 12px;
+  }
+  .dr-filmbot-response {
+    padding: 15px;
+  }
+  .dr-filmbot-illustration {
+    width: 100px;
+    margin-bottom: 8px; /* Adjusted for tablet */
+  }
 }
 
 /* Mobile Phone Adjustments (max-width: 480px) */
@@ -696,7 +815,8 @@ button:hover,
     padding: 5px;
     font-size: 0.75em;
   }
-  button {
+  button,
+  .dr-filmbot-button {
     padding: 5px 15px;
     font-size: 0.85em;
   }
@@ -768,5 +888,22 @@ button:hover,
   }
   .movie-of-the-month-poster {
     width: 150px;
+  }
+  .dr-filmbot-section {
+    width: 95%;
+  }
+  .dr-filmbot-input-textarea {
+    font-size: 14px;
+  }
+  .dr-filmbot-button {
+    width: 100%;
+    padding: 12px;
+  }
+  .dr-filmbot-response {
+    padding: 10px;
+  }
+  .dr-filmbot-illustration {
+    width: 80px;
+    margin-bottom: 6px; /* Adjusted for mobile */
   }
 }

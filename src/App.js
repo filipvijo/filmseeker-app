@@ -15,6 +15,7 @@ import facebookIcon from './facebook-icon.png';
 import whatsappIcon from './whatsapp-icon.png';
 import instagramIcon from './instagram-icon.png';
 import tipIcon from './tip-icon.png';
+import drFilmBotIllustration from './dr-filmbot-illustration.png'; // Import your illustration
 
 // Helper function to convert a string to a URL-friendly slug
 const slugify = (text) => {
@@ -28,6 +29,7 @@ const slugify = (text) => {
 };
 
 function App() {
+  // States for movie preferences and recommendations
   const [genre, setGenre] = useState('');
   const [duration, setDuration] = useState('');
   const [decade, setDecade] = useState('');
@@ -45,9 +47,15 @@ function App() {
   const [showDetails, setShowDetails] = useState(false);
   const [showAboutUs, setShowAboutUs] = useState(false);
   const [showMessagePopup, setShowMessagePopup] = useState(false);
+
+  // Dr FilmBot States (previously AI Concierge)
+  const [drFilmBotUserInput, setDrFilmBotUserInput] = useState('');
+  const [drFilmBotSuggestions, setDrFilmBotSuggestions] = useState([]);
+  const [isDrFilmBotLoading, setIsDrFilmBotLoading] = useState(false);
+
   const [message, setMessage] = useState('');
 
-  // TMDB API key
+  // TMDB API key from your .env file
   const API_KEY = process.env.REACT_APP_TMDB_API_KEY;
 
   // Map language names to ISO codes
@@ -73,9 +81,7 @@ function App() {
     indian: 'hi',
   };
 
-  // ---------------------------
-  //   useEffect on Mount
-  // ---------------------------
+  // useEffect on Mount
   useEffect(() => {
     const fetchTrendingFilms = async () => {
       try {
@@ -129,6 +135,7 @@ function App() {
       }
     };
 
+    // Clear local storage and reset filters on mount
     localStorage.clear();
     setGenre('');
     setDuration('');
@@ -151,9 +158,7 @@ function App() {
     localStorage.setItem('director', director);
   }, [genre, duration, decade, language, actor, director]);
 
-  // ---------------------------
-  //   getRecommendations (Updated for 16 suggestions)
-  // ---------------------------
+  // getRecommendations (Updated for 16 suggestions)
   const getRecommendations = async () => {
     setIsLoading(true);
     setRecommendations([]);
@@ -325,9 +330,7 @@ function App() {
     }
   };
 
-  // ---------------------------
-  //   getRandomRecommendation
-  // ---------------------------
+  // getRandomRecommendation
   const getRandomRecommendation = async () => {
     setIsLoading(true);
     setRecommendations([]);
@@ -357,9 +360,7 @@ function App() {
     }
   };
 
-  // ---------------------------
-  //   fetchMovieDetails
-  // ---------------------------
+  // fetchMovieDetails
   const fetchMovieDetails = async (movieId) => {
     try {
       const timestamp = new Date().getTime();
@@ -386,9 +387,32 @@ function App() {
     }
   };
 
-  // ---------------------------
-  //   Modal and Misc Controls
-  // ---------------------------
+  // Fetch movie poster from TMDB
+  const fetchMoviePoster = async (movieTitle) => {
+    try {
+      // Clean the movie title by removing the number, year, and extra spaces
+      const cleanTitle = movieTitle.replace(/^\d+\.\s*/, '').replace(/\(\d{4}\)/, '').trim();
+      console.log('Fetching poster for movie title:', cleanTitle);
+      const response = await axios.get(
+        `https://api.themoviedb.org/3/search/movie?api_key=${API_KEY}&query=${encodeURIComponent(cleanTitle)}`
+      );
+      console.log('TMDB API response for', cleanTitle, ':', response.data);
+      const movie = response.data.results[0];
+      if (movie && movie.poster_path) {
+        const posterUrl = `https://image.tmdb.org/t/p/w500${movie.poster_path}`;
+        console.log('Poster found for', cleanTitle, ':', posterUrl);
+        return { id: movie.id, poster: posterUrl };
+      } else {
+        console.log('No poster found for', cleanTitle);
+        return null;
+      }
+    } catch (error) {
+      console.error(`Error fetching poster for ${movieTitle}:`, error);
+      return null;
+    }
+  };
+
+  // Modal and Misc Controls
   const closeModal = () => {
     setSelectedMovie(null);
     setMovieDetails(null);
@@ -414,9 +438,7 @@ function App() {
     }
   };
 
-  // ---------------------------
-  //   Social Sharing
-  // ---------------------------
+  // Social Sharing
   const getMovieUrl = (movieId) => `https://filmseeker-app.vercel.app/movie/${movieId}`;
 
   const shareOnX = (movie) => {
@@ -464,9 +486,7 @@ function App() {
     });
   };
 
-  // ---------------------------
-  //   About Us Modal
-  // ---------------------------
+  // About Us Modal
   const openAboutUs = () => {
     setShowAboutUs(true);
   };
@@ -475,9 +495,7 @@ function App() {
     setShowAboutUs(false);
   };
 
-  // ---------------------------
-  //   Message Popup
-  // ---------------------------
+  // Message Popup
   const openMessagePopup = () => {
     setShowMessagePopup(true);
   };
@@ -503,6 +521,69 @@ function App() {
       }
     } else {
       alert('Please enter a message before sending.');
+    }
+  };
+
+  // Dr FilmBot Integration (previously AI Concierge)
+  const askDrFilmBot = async (userPrompt) => {
+    const OPENAI_API_KEY = process.env.REACT_APP_OPENAI_API_KEY;
+    setIsDrFilmBotLoading(true);
+    setDrFilmBotSuggestions([]);
+    try {
+      const response = await axios.post(
+        'https://api.openai.com/v1/chat/completions',
+        {
+          model: 'gpt-3.5-turbo',
+          messages: [
+            {
+              role: 'system',
+              content:
+                'You are a friendly and knowledgeable movie expert named Dr FilmBot who provides personalized film recommendations. When asked for a recommendation, suggest exactly three movies that match the user’s mood or preferences. For each movie, provide the title, year, a short description, and one memorable quote to spark interest. Format your response as a list: 1. Movie Title (Year) - Short Description - "Memorable Quote". 2. Movie Title (Year) - Short Description - "Memorable Quote". 3. Movie Title (Year) - Short Description - "Memorable Quote".',
+            },
+            { role: 'user', content: userPrompt },
+          ],
+          max_tokens: 500, // Increased to accommodate multiple suggestions and quotes
+          temperature: 0.8,
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${OPENAI_API_KEY}`,
+          },
+        }
+      );
+      const aiMessage = response.data.choices[0].message.content.trim();
+      console.log('OpenAI response:', aiMessage);
+      // Parse the response into a list of movies with titles, descriptions, and quotes
+      const suggestions = aiMessage.split('\n').filter(line => line.trim()).map(line => {
+        const parts = line.split(' - ');
+        if (parts.length >= 3) {
+          const title = parts[0].trim();
+          const quote = parts[parts.length - 1].replace(/"/g, '').trim();
+          const description = parts.slice(1, parts.length - 1).join(' - ').trim();
+          return { title, description, quote };
+        }
+        return null;
+      }).filter(suggestion => suggestion);
+      console.log('Parsed suggestions:', suggestions);
+      // Fetch posters for each suggestion
+      const suggestionsWithPosters = await Promise.all(
+        suggestions.map(async (suggestion) => {
+          const posterData = await fetchMoviePoster(suggestion.title);
+          return {
+            ...suggestion,
+            poster: posterData?.poster || null,
+            id: posterData?.id || null,
+          };
+        })
+      );
+      console.log('Suggestions with posters:', suggestionsWithPosters);
+      setDrFilmBotSuggestions(suggestionsWithPosters.slice(0, 3)); // Ensure max 3 suggestions
+    } catch (error) {
+      console.error('Error fetching Dr FilmBot recommendation:', error);
+      setDrFilmBotSuggestions([{ title: 'Error', description: 'Oops! Something went wrong. Please try again.', quote: '' }]);
+    } finally {
+      setIsDrFilmBotLoading(false);
     }
   };
 
@@ -700,7 +781,7 @@ function App() {
       </div>
 
       {/* Buttons */}
-      <div className="input-group button-group">
+      <div className="button-group">
         <button onClick={getRecommendations} disabled={isLoading} className={isLoading ? 'button-disabled' : ''}>
           {isLoading ? 'Loading...' : 'Get My Film!'}
         </button>
@@ -708,6 +789,13 @@ function App() {
           {isLoading ? 'Loading...' : 'Surprise Me!'}
         </button>
       </div>
+
+      {/* No Recommendations Message */}
+      {recommendations.length === 0 && !isLoading && (
+        <p className="no-recommendations">
+          No recommendations yet. Select your preferences and click "Get My Film!"
+        </p>
+      )}
 
       {/* Recommendations */}
       <div className="recommendation">
@@ -723,9 +811,66 @@ function App() {
               )}
             </div>
           ))
-        ) : (
-          <p>No recommendations yet. Select your preferences and click "Get My Film!"</p>
-        )}
+        ) : null}
+      </div>
+
+      {/* Dr FilmBot Section */}
+      <div className="dr-filmbot-section">
+        <img
+          src={drFilmBotIllustration}
+          alt="Dr FilmBot Illustration"
+          className="dr-filmbot-illustration"
+        />
+        <h2>Ask Dr FilmBot</h2>
+        <label htmlFor="dr-filmbot-input" style={{ display: 'block', marginBottom: '10px', color: '#d1d5db' }}>
+          Describe your mood or preferences:
+        </label>
+        <textarea
+          id="dr-filmbot-input"
+          rows="4"
+          placeholder="E.g., 'I want a funny sci-fi movie' or 'Something relaxing for tonight'"
+          value={drFilmBotUserInput}
+          onChange={(e) => setDrFilmBotUserInput(e.target.value)}
+          className="dr-filmbot-input-textarea"
+        />
+        <button
+          className="dr-filmbot-button"
+          onClick={() => askDrFilmBot(drFilmBotUserInput)}
+          disabled={isDrFilmBotLoading || !drFilmBotUserInput.trim()}
+        >
+          {isDrFilmBotLoading ? 'Loading...' : 'Get Recommendation'}
+        </button>
+        {isDrFilmBotLoading ? (
+          <div className="spinner" style={{ marginTop: '20px' }}></div>
+        ) : drFilmBotSuggestions.length > 0 ? (
+          <div className="dr-filmbot-response">
+            <h3>Movie Prescription:</h3>
+            <div className="recommendation">
+              {drFilmBotSuggestions.map((suggestion, index) => (
+                <div key={index} className="recommendation-item">
+                  {suggestion.poster ? (
+                    <img
+                      src={suggestion.poster}
+                      alt={`${suggestion.title} Poster`}
+                      className="poster"
+                      onClick={() => suggestion.id && fetchMovieDetails(suggestion.id)}
+                      onError={(e) => {
+                        console.log(`Failed to load poster for ${suggestion.title}:`, suggestion.poster);
+                        e.target.style.display = 'none'; // Hide broken image
+                      }}
+                    />
+                  ) : (
+                    <p>{suggestion.title} (No poster available)</p>
+                  )}
+                  <p>{suggestion.description}</p>
+                  {suggestion.quote && (
+                    <p className="movie-quote">"{suggestion.quote}"</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
       </div>
 
       {/* Movie of the Month Modal */}
