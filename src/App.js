@@ -23,9 +23,9 @@ const slugify = (text) => {
     .toString()
     .toLowerCase()
     .trim()
-    .replace(/\s+/g, '-')       // Replace spaces with -
-    .replace(/[^\w\-]+/g, '')   // Remove all non-word chars
-    .replace(/\-\-+/g, '-');    // Replace multiple - with single -
+    .replace(/\s+/g, '-') // Replace spaces with -
+    .replace(/[^\w-]+/g, '') // Remove all non-word chars except hyphen
+    .replace(/--+/g, '-'); // Replace multiple - with single -
 };
 
 function App() {
@@ -48,7 +48,7 @@ function App() {
   const [showAboutUs, setShowAboutUs] = useState(false);
   const [showMessagePopup, setShowMessagePopup] = useState(false);
 
-  // Dr FilmBot States (previously AI Concierge)
+  // Dr FilmBot States
   const [drFilmBotUserInput, setDrFilmBotUserInput] = useState('');
   const [drFilmBotSuggestions, setDrFilmBotSuggestions] = useState([]);
   const [isDrFilmBotLoading, setIsDrFilmBotLoading] = useState(false);
@@ -58,7 +58,7 @@ function App() {
   // TMDB API key from your .env file
   const API_KEY = process.env.REACT_APP_TMDB_API_KEY;
 
-  // Map language names to ISO codes
+  // Map language names to ISO codes (preserving your additions)
   const languageMap = {
     '': '',
     english: 'en',
@@ -79,6 +79,23 @@ function App() {
     italian: 'it',
     hebrew: 'he',
     indian: 'hi',
+    portuguese: 'pt',    // Added
+    armenian: 'hy',      // Added
+    finnish: 'fi',       // Added
+    hungarian: 'hu',     // Added
+    bulgarian: 'bg',     // Added
+    romanian: 'ro',      // Added
+    mongolian: 'mn',     // Added
+    vietnamese: 'vi',    // Added
+    lithuanian: 'lt',    // Added
+    estonian: 'et',      // Added
+    latvian: 'lv',       // Added
+    slovak: 'sk',        // Added
+    czech: 'cs',         // Corrected from "cech" to "czech"
+    turkish: 'tr',       // Added
+    albanian: 'sq',      // Added
+    slovenian: 'sl',     // Added
+    moldavian: 'ro',     // Added (mapped to Romanian as per ISO standard)
   };
 
   // useEffect on Mount
@@ -158,7 +175,7 @@ function App() {
     localStorage.setItem('director', director);
   }, [genre, duration, decade, language, actor, director]);
 
-  // getRecommendations (Updated for 16 suggestions)
+  // getRecommendations (Updated for 16 suggestions with original language logic)
   const getRecommendations = async () => {
     setIsLoading(true);
     setRecommendations([]);
@@ -248,8 +265,8 @@ function App() {
         const decadeFilter = decade
           ? `&primary_release_date.gte=${decade}-01-01&primary_release_date.lte=${parseInt(decade) + 9}-12-31`
           : '';
-        const languageFilter = language
-          ? `&with_original_language=${languageMap[language.toLowerCase()] || language.toLowerCase()}`
+        const languageFilter = language && languageMap[language.toLowerCase()]
+          ? `&with_original_language=${languageMap[language.toLowerCase()]}`
           : '';
         const actorFilter = actorId ? `&with_cast=${actorId}` : '';
         const durationFilter = {
@@ -306,8 +323,7 @@ function App() {
           : true;
         const matchesGenre = genre ? movie.genres.includes(genreId) : true;
         const matchesLanguage = language
-          ? (movie.original_language === languageMap[language.toLowerCase()] ||
-             movie.original_language === language.toLowerCase())
+          ? movie.original_language === languageMap[language.toLowerCase()]
           : true;
         const matchesActor = actorId ? movie.cast.includes(parseInt(actorId)) : true;
         return matchesDuration && matchesDecade && matchesGenre && matchesLanguage && matchesActor;
@@ -365,7 +381,7 @@ function App() {
     try {
       const timestamp = new Date().getTime();
       const detailsResponse = await axios.get(
-        `https://api.themoviedb.org/3/movie/${movieId}?api_key=${API_KEY}&_=${timestamp}`
+        `https://api.themoviedb.org/3/movie/${movieId}?api_key=${API_KEY}&_=${timestamp}&append_to_response=credits`
       );
       const videosResponse = await axios.get(
         `https://api.themoviedb.org/3/movie/${movieId}/videos?api_key=${API_KEY}&_=${timestamp}`
@@ -388,14 +404,15 @@ function App() {
   };
 
   // Fetch movie poster from TMDB
-  const fetchMoviePoster = async (movieTitle) => {
+  const fetchMoviePoster = async (movieTitle, movieYear = '') => {
     try {
-      // Clean the movie title by removing the number, year, and extra spaces
       const cleanTitle = movieTitle.replace(/^\d+\.\s*/, '').replace(/\(\d{4}\)/, '').trim();
-      console.log('Fetching poster for movie title:', cleanTitle);
-      const response = await axios.get(
-        `https://api.themoviedb.org/3/search/movie?api_key=${API_KEY}&query=${encodeURIComponent(cleanTitle)}`
-      );
+      console.log('Fetching poster for movie title:', cleanTitle, 'Year:', movieYear);
+      let query = `https://api.themoviedb.org/3/search/movie?api_key=${API_KEY}&query=${encodeURIComponent(cleanTitle)}`;
+      if (movieYear) {
+        query += `&year=${movieYear}`;
+      }
+      const response = await axios.get(query);
       console.log('TMDB API response for', cleanTitle, ':', response.data);
       const movie = response.data.results[0];
       if (movie && movie.poster_path) {
@@ -404,11 +421,11 @@ function App() {
         return { id: movie.id, poster: posterUrl };
       } else {
         console.log('No poster found for', cleanTitle);
-        return null;
+        return { id: null, poster: null };
       }
     } catch (error) {
-      console.error(`Error fetching poster for ${movieTitle}:`, error);
-      return null;
+      console.error(`Error fetching poster for ${movieTitle}:`, error.message);
+      return { id: null, poster: null };
     }
   };
 
@@ -441,44 +458,73 @@ function App() {
   // Social Sharing
   const getMovieUrl = (movieId) => `https://filmseeker-app.vercel.app/movie/${movieId}`;
 
-  const shareOnX = (movie) => {
+  const shareOnX = async (movie) => {
     if (!movie || !movie.title || !movie.id) {
       alert('Error: Movie data is not available for sharing.');
       return;
     }
-    const text = `Check out this movie: ${movie.title}`;
+    const creditsResponse = await axios.get(
+      `https://api.themoviedb.org/3/movie/${movie.id}?api_key=${API_KEY}&append_to_response=credits`
+    );
+    const writers = creditsResponse.data.credits.crew
+      .filter((crew) => crew.job === 'Writer' || crew.job === 'Screenplay')
+      .map((writer) => writer.name)
+      .join(', ') || 'Unknown';
+    const text = `Check out this movie: ${movie.title} (Writer${writers.includes(',') ? 's' : ''}: ${writers})`;
     const url = getMovieUrl(movie.id);
     const shareUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
     window.open(shareUrl, '_blank');
   };
 
-  const shareOnFacebook = (movie) => {
+  const shareOnFacebook = async (movie) => {
     if (!movie || !movie.id) {
       alert('Error: Movie data is not available for sharing.');
       return;
     }
+    const creditsResponse = await axios.get(
+      `https://api.themoviedb.org/3/movie/${movie.id}?api_key=${API_KEY}&append_to_response=credits`
+    );
+    const writers = creditsResponse.data.credits.crew
+      .filter((crew) => crew.job === 'Writer' || crew.job === 'Screenplay')
+      .map((writer) => writer.name)
+      .join(', ') || 'Unknown';
+    const text = `Check out this movie: ${movie.title} (Writer${writers.includes(',') ? 's' : ''}: ${writers})`;
     const url = getMovieUrl(movie.id);
-    const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+    const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}"e=${encodeURIComponent(text)}`;
     window.open(shareUrl, '_blank');
   };
 
-  const shareOnWhatsApp = (movie) => {
+  const shareOnWhatsApp = async (movie) => {
     if (!movie || !movie.title || !movie.id) {
       alert('Error: Movie data is not available for sharing.');
       return;
     }
-    const text = `Check out this movie: ${movie.title}`;
+    const creditsResponse = await axios.get(
+      `https://api.themoviedb.org/3/movie/${movie.id}?api_key=${API_KEY}&append_to_response=credits`
+    );
+    const writers = creditsResponse.data.credits.crew
+      .filter((crew) => crew.job === 'Writer' || crew.job === 'Screenplay')
+      .map((writer) => writer.name)
+      .join(', ') || 'Unknown';
+    const text = `Check out this movie: ${movie.title} (Writer${writers.includes(',') ? 's' : ''}: ${writers})`;
     const url = getMovieUrl(movie.id);
     const shareUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(text + ' ' + url)}`;
     window.open(shareUrl, '_blank');
   };
 
-  const shareOnInstagram = (movie) => {
+  const shareOnInstagram = async (movie) => {
     if (!movie || !movie.title || !movie.overview) {
       alert('Error: Movie data is not available for sharing.');
       return;
     }
-    const text = `Check out this movie: ${movie.title} - ${movie.overview.substring(0, 100)}...`;
+    const creditsResponse = await axios.get(
+      `https://api.themoviedb.org/3/movie/${movie.id}?api_key=${API_KEY}&append_to_response=credits`
+    );
+    const writers = creditsResponse.data.credits.crew
+      .filter((crew) => crew.job === 'Writer' || crew.job === 'Screenplay')
+      .map((writer) => writer.name)
+      .join(', ') || 'Unknown';
+    const text = `Check out this movie: ${movie.title} (Writer${writers.includes(',') ? 's' : ''}: ${writers}) - ${movie.overview.substring(0, 100)}...`;
     navigator.clipboard.writeText(text).then(() => {
       alert('Message copied to clipboard! Paste it into Instagram to share.');
     }).catch(() => {
@@ -524,9 +570,16 @@ function App() {
     }
   };
 
-  // Dr FilmBot Integration (previously AI Concierge)
+  // Dr FilmBot Integration
   const askDrFilmBot = async (userPrompt) => {
     const OPENAI_API_KEY = process.env.REACT_APP_OPENAI_API_KEY;
+    if (!OPENAI_API_KEY) {
+      console.error('OpenAI API key is missing. Please set REACT_APP_OPENAI_API_KEY in your .env file.');
+      setDrFilmBotSuggestions([{ title: 'Error', description: 'OpenAI API key is missing. Please contact the administrator.', quote: '' }]);
+      setIsDrFilmBotLoading(false);
+      return;
+    }
+
     setIsDrFilmBotLoading(true);
     setDrFilmBotSuggestions([]);
     try {
@@ -542,7 +595,7 @@ function App() {
             },
             { role: 'user', content: userPrompt },
           ],
-          max_tokens: 500, // Increased to accommodate multiple suggestions and quotes
+          max_tokens: 500,
           temperature: 0.8,
         },
         {
@@ -553,35 +606,63 @@ function App() {
         }
       );
       const aiMessage = response.data.choices[0].message.content.trim();
-      console.log('OpenAI response:', aiMessage);
-      // Parse the response into a list of movies with titles, descriptions, and quotes
-      const suggestions = aiMessage.split('\n').filter(line => line.trim()).map(line => {
+      console.log('OpenAI raw response:', aiMessage);
+
+      const suggestions = [];
+      const lines = aiMessage.split('\n').filter(line => line.trim());
+      for (const line of lines) {
         const parts = line.split(' - ');
         if (parts.length >= 3) {
-          const title = parts[0].trim();
+          const titleWithYear = parts[0].trim();
           const quote = parts[parts.length - 1].replace(/"/g, '').trim();
           const description = parts.slice(1, parts.length - 1).join(' - ').trim();
-          return { title, description, quote };
+
+          const titleMatch = titleWithYear.match(/^(?:\d+\.\s*)?(.*?)\s*\((\d{4})\)$/);
+          if (titleMatch) {
+            const title = titleMatch[1].trim();
+            const year = titleMatch[2];
+            suggestions.push({ title, year, description, quote });
+          } else {
+            console.warn(`Could not parse title and year from line: ${titleWithYear}`);
+            suggestions.push({ title: titleWithYear, year: '', description, quote });
+          }
+        } else {
+          console.warn(`Skipping malformed line: ${line}`);
         }
-        return null;
-      }).filter(suggestion => suggestion);
+      }
       console.log('Parsed suggestions:', suggestions);
-      // Fetch posters for each suggestion
+
+      if (suggestions.length === 0) {
+        throw new Error('No valid movie suggestions could be parsed from the OpenAI response.');
+      }
+
       const suggestionsWithPosters = await Promise.all(
         suggestions.map(async (suggestion) => {
-          const posterData = await fetchMoviePoster(suggestion.title);
+          const posterData = await fetchMoviePoster(suggestion.title, suggestion.year);
           return {
             ...suggestion,
-            poster: posterData?.poster || null,
-            id: posterData?.id || null,
+            poster: posterData.poster,
+            id: posterData.id,
           };
         })
       );
       console.log('Suggestions with posters:', suggestionsWithPosters);
-      setDrFilmBotSuggestions(suggestionsWithPosters.slice(0, 3)); // Ensure max 3 suggestions
+
+      setDrFilmBotSuggestions(suggestionsWithPosters.slice(0, 3));
     } catch (error) {
-      console.error('Error fetching Dr FilmBot recommendation:', error);
-      setDrFilmBotSuggestions([{ title: 'Error', description: 'Oops! Something went wrong. Please try again.', quote: '' }]);
+      console.error('Error in askDrFilmBot:', error.message);
+      if (error.response) {
+        console.error('OpenAI API error response:', error.response.data);
+        if (error.response.status === 401) {
+          setDrFilmBotSuggestions([{ title: 'Error', description: 'Invalid OpenAI API key. Please contact the administrator.', quote: '' }]);
+        } else if (error.response.status === 429) {
+          setDrFilmBotSuggestions([{ title: 'Error', description: 'Rate limit exceeded for OpenAI API. Please try again later.', quote: '' }]);
+        } else {
+          setDrFilmBotSuggestions([{ title: 'Error', description: `OpenAI API error: ${error.response.data.error?.message || 'Unknown error'}. Please try again.`, quote: '' }]);
+        }
+      } else {
+        setDrFilmBotSuggestions([{ title: 'Error', description: `Failed to fetch recommendations: ${error.message}. Please try again.`, quote: '' }]);
+      }
     } finally {
       setIsDrFilmBotLoading(false);
     }
@@ -783,19 +864,9 @@ function App() {
       {/* Buttons */}
       <div className="button-group">
         <button onClick={getRecommendations} disabled={isLoading} className={isLoading ? 'button-disabled' : ''}>
-          {isLoading ? 'Loading...' : 'Get My Film!'}
-        </button>
-        <button onClick={getRandomRecommendation} disabled={isLoading} className={isLoading ? 'button-disabled surprise-button' : 'surprise-button'} style={{ marginLeft: '40px' }}>
-          {isLoading ? 'Loading...' : 'Surprise Me!'}
+          {isLoading ? 'Loading...' : 'GET MY FILM'}
         </button>
       </div>
-
-      {/* No Recommendations Message */}
-      {recommendations.length === 0 && !isLoading && (
-        <p className="no-recommendations">
-          No recommendations yet. Select your preferences and click "Get My Film!"
-        </p>
-      )}
 
       {/* Recommendations */}
       <div className="recommendation">
@@ -811,7 +882,18 @@ function App() {
               )}
             </div>
           ))
-        ) : null}
+        ) : (
+          <p className="no-recommendations">
+            No recommendations yet. Select your preferences and click "GET MY FILM!"
+          </p>
+        )}
+      </div>
+
+      <div className="surprise-button-container">
+        <button onClick={getRandomRecommendation} disabled={isLoading} className={isLoading ? 'button-disabled surprise-button' : 'surprise-button'}>
+          {isLoading ? 'Loading...' : 'Surprise Me!'}
+        </button>
+        <p className="random-pick-text">Random Pick</p>
       </div>
 
       {/* Dr FilmBot Section */}
@@ -856,12 +938,11 @@ function App() {
                       onClick={() => suggestion.id && fetchMovieDetails(suggestion.id)}
                       onError={(e) => {
                         console.log(`Failed to load poster for ${suggestion.title}:`, suggestion.poster);
-                        e.target.style.display = 'none'; // Hide broken image
+                        e.target.style.display = 'none';
                       }}
                     />
-                  ) : (
-                    <p>{suggestion.title} (No poster available)</p>
-                  )}
+                  ) : null}
+                  <p>{suggestion.title}{suggestion.year ? ` (${suggestion.year})` : ''}</p>
                   <p>{suggestion.description}</p>
                   {suggestion.quote && (
                     <p className="movie-quote">"{suggestion.quote}"</p>

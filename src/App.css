@@ -70,7 +70,7 @@ h1 {
 .input-container {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 30px; /* Increased for more spacing */
+  gap: 30px;
   background: rgba(25, 35, 70, 0.5);
   backdrop-filter: blur(12px);
   padding: 40px;
@@ -95,11 +95,18 @@ h1 {
 
 .button-group {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   padding: 10px;
-  gap: 40px;
+  gap: 10px;
+}
+
+.surprise-button-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 20px;
 }
 
 .input-group img {
@@ -135,7 +142,7 @@ input:focus, select:focus {
   outline: none;
 }
 
-/* ---- Button Styles Override ---- */
+/* Button Styles */
 button,
 .trailer-button,
 .send-button,
@@ -144,7 +151,7 @@ button,
 .dr-filmbot-button {
   padding: 12px 30px;
   font-size: 1.3em;
-  background: #25FDE9 !important;
+  background: #25FDE9;
   color: #1f2937;
   border: none;
   border-radius: 25px;
@@ -160,7 +167,7 @@ button:hover,
 .surprise-button:hover,
 .watch-now-button:hover,
 .dr-filmbot-button:hover {
-  background: #25FDE9 !important;
+  background: #25FDE9;
   transform: translateY(-3px);
   box-shadow: 0 6px 20px rgba(37, 253, 233, 0.6);
 }
@@ -176,11 +183,9 @@ button:hover,
 .modal-buttons {
   display: flex;
   justify-content: center;
-  gap: 15px; /* Space between trailer and watch now buttons */
+  gap: 15px;
   margin-top: 20px;
 }
-
-/* ------------------------------ */
 
 /* Recommendation Section */
 .recommendation {
@@ -199,22 +204,19 @@ button:hover,
   align-items: center;
   cursor: pointer;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: none; /* Add this line to remove the shadow */
 }
 
 /* Zoom effect for Get My Film and Surprise Me recommendations */
 .recommendation-item:hover {
-  transform: scale(1.1);
-  box-shadow: 0 8px 20px rgba(163, 191, 250, 0.6);
-}
-
-/* Remove zoom effect for Movie Prescription films */
-.dr-filmbot-response .recommendation-item {
-  cursor: default;
-}
-
-.dr-filmbot-response .recommendation-item:hover {
-  transform: none;
+  
   box-shadow: none;
+}
+
+
+
+.dr-filmbot-response .recommendation-item:hover .poster {
+  transform: scale(1.05); /* Apply zoom only to posters */
 }
 
 /* Generic poster for movies */
@@ -224,6 +226,7 @@ button:hover,
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   margin: 0;
+  transition: transform 0.3s ease;
 }
 
 /* Trending Posters */
@@ -250,7 +253,7 @@ button:hover,
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.8); /* Keep the dark overlay but adjust if needed */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -277,10 +280,17 @@ button:hover,
 }
 
 .movie-of-the-month-modal {
-  background: linear-gradient(135deg, rgba(15, 25, 60, 0.95), rgba(30, 40, 80, 0.95));
-  border-image: linear-gradient(to right, #d4af37, #a3bffa, #d4af37) 1;
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6), inset 0 0 20px rgba(212, 175, 55, 0.2);
-  animation: cinematicSlideIn 0.9s ease-out;
+  background: transparent; /* Remove the gradient background */
+  border: none; /* Remove any border */
+  border-image: none; /* Remove the gradient border */
+  box-shadow: none; /* Remove the shadow */
+  animation: cinematicSlideIn 0.9s ease-out; /* Keep the animation if desired */
+  padding: 0; /* Remove any padding to avoid extra space */
+}
+
+.modal-content.movie-of-the-month-modal {
+  border: none; /* Override the default border */
+  border-image: none; /* Override the default border-image */
 }
 
 .movie-of-the-month-container {
@@ -288,10 +298,11 @@ button:hover,
   flex-direction: column;
   align-items: center;
   gap: 25px;
-  padding: 20px;
-  background: linear-gradient(135deg, rgba(20, 30, 65, 0.8), rgba(40, 50, 85, 0.8));
-  border-radius: 15px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), inset 0 0 15px rgba(163, 191, 250, 0.2);
+  padding: 0; /* Remove padding */
+  background: transparent; /* Remove the gradient background */
+  border: none; /* Remove any border */
+  box-shadow: none; /* Remove the shadow */
+  border-radius: 0; /* Remove rounded corners if any */
 }
 
 .movie-of-the-month-poster {
@@ -472,7 +483,7 @@ button:hover,
 }
 
 .button-disabled {
-  background: #25FDE9 !important;
+  background: #25FDE9;
   opacity: 0.7;
   cursor: not-allowed;
   box-shadow: none;
@@ -480,7 +491,7 @@ button:hover,
 
 /* No Recommendations Message */
 .no-recommendations {
-  margin-top: 20px;
+  margin-top: 10px;
   color: #d1d5db;
   font-size: 1.1em;
 }
@@ -519,17 +530,19 @@ button:hover,
 .film-of-the-month-button {
   padding: 13px 33px;
   font-size: 1.4em;
-  background: #25FDE9 !important;
+  background: #25FDE9;
   color: #1f2937;
   border: none;
   border-radius: 25px;
   cursor: pointer;
   transition: all 0.4s ease;
   box-shadow: 0 4px 15px rgba(37, 253, 233, 0.4);
+  text-transform: uppercase; /* Makes text all caps */
+  font-weight: bold; /* Makes text bold */
 }
 
 .film-of-the-month-button:hover {
-  background: #25FDE9 !important;
+  background: #25FDE9;
   transform: translateY(-3px);
   box-shadow: 0 6px 20px rgba(37, 253, 233, 0.6);
 }
@@ -538,19 +551,30 @@ button:hover,
 .surprise-button {
   padding: 12px 30px;
   font-size: 1.3em;
-  background: #25FDE9 !important;
+  background: #1ed7c9; /* Lighter teal to stand out */
   color: #1f2937;
   border: none;
   border-radius: 25px;
   cursor: pointer;
-  transition: all 0.4s ease;
-  box-shadow: 0 4px 15px rgba(37, 253, 233, 0.4);
+  transition: all 0.4s ease, transform 0.3s ease;
+  box-shadow: 0 4px 15px rgba(30, 215, 201, 0.4);
+  animation: pulse 2s infinite;
+  border: 2px dashed rgba(255, 255, 255, 0.3); /* Added subtle frame */
+  text-transform: uppercase; /* Makes text all caps */
+  font-weight: bold; /* Makes text bold */
 }
 
 .surprise-button:hover {
-  background: #25FDE9 !important;
-  transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(37, 253, 233, 0.6);
+  background: #1ed7c9;
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 6px 20px rgba(30, 215, 201, 0.6);
+}
+
+.random-pick-text {
+  color: #d1d5db;
+  font-size: 1em;
+  margin-top: 5px;
+  font-style: italic;
 }
 
 /* Dr FilmBot Section Styles */
@@ -561,18 +585,19 @@ button:hover,
   margin-top: 20px;
   width: 80%;
   max-width: 600px;
+  box-shadow: none; /* Add this line to remove the shadow */
 }
 
 .dr-filmbot-illustration {
-  width: 200px;
+  width: 250px;
   height: auto;
-  margin-bottom: 1px; /* Reduced from 20px to bring it closer to the text */
+  margin-bottom: 3px;
 }
 
 .dr-filmbot-section h2 {
   color: #a3bffa;
   font-size: 2em;
-  margin-bottom: 10px;
+  margin-bottom: 20px;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);
   font-weight: 700;
 }
@@ -592,7 +617,7 @@ button:hover,
 .dr-filmbot-button {
   padding: 12px 30px;
   font-size: 1.3em;
-  background: #25FDE9 !important;
+  background: #25FDE9;
   color: #1f2937;
   border: none;
   border-radius: 25px;
@@ -603,13 +628,13 @@ button:hover,
 }
 
 .dr-filmbot-button:hover {
-  background: #25FDE9 !important;
+  background: #25FDE9;
   transform: translateY(-3px);
   box-shadow: 0 6px 20px rgba(37, 253, 233, 0.6);
 }
 
 .dr-filmbot-button:disabled {
-  background: #25FDE9 !important;
+  background: #25FDE9;
   opacity: 0.7;
   cursor: not-allowed;
   box-shadow: none;
@@ -623,6 +648,7 @@ button:hover,
   border-radius: 10px;
   text-align: left;
   color: #d1d5db;
+  box-shadow: none; /* Add this line to remove the shadow */
 }
 
 .dr-filmbot-response h3 {
@@ -776,7 +802,13 @@ button:hover,
   }
   .dr-filmbot-illustration {
     width: 100px;
-    margin-bottom: 8px; /* Adjusted for tablet */
+    margin-bottom: 8px;
+  }
+  .surprise-button {
+    padding: 8px 20px;
+  }
+  .random-pick-text {
+    font-size: 0.9em;
   }
 }
 
@@ -872,7 +904,7 @@ button:hover,
   }
   .modal-buttons {
     gap: 8px;
-    flex-direction: column; /* Stack buttons on very small screens */
+    flex-direction: column;
   }
   .message-modal {
     padding: 15px;
@@ -903,7 +935,13 @@ button:hover,
     padding: 10px;
   }
   .dr-filmbot-illustration {
-    width: 80px;
-    margin-bottom: 6px; /* Adjusted for mobile */
+    width: 150px;
+    margin-bottom: 6px;
+  }
+  .surprise-button {
+    padding: 6px 15px;
+  }
+  .random-pick-text {
+    font-size: 0.8em;
   }
 }
