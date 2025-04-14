@@ -179,6 +179,34 @@ button:hover,
   border-radius: 8px;
 }
 
+.watch-now-button {
+  background: linear-gradient(45deg, #e50914, #ff5f57);
+  color: #ffffff;
+  border: none;
+  border-radius: 30px;
+  padding: 12px 30px;
+  font-size: 1.2em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(229, 9, 20, 0.3);
+  margin: 0 10px;
+  position: relative;
+  overflow: hidden;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.watch-now-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 7px 20px rgba(229, 9, 20, 0.4);
+  background: linear-gradient(45deg, #ff0a17, #ff7b74);
+}
+
+.watch-now-button:active {
+  transform: translateY(1px);
+}
+
 /* Modal Buttons Container */
 .modal-buttons {
   display: flex;
@@ -209,7 +237,7 @@ button:hover,
 
 /* Zoom effect for Get My Film and Surprise Me recommendations */
 .recommendation-item:hover {
-  
+
   box-shadow: none;
 }
 
@@ -221,21 +249,34 @@ button:hover,
 
 /* Generic poster for movies */
 .poster {
-  width: 150px;
+  width: 180px; /* Increased from 150px */
   height: auto;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  border-radius: 12px; /* Increased from 8px for a softer look */
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3); /* Enhanced shadow */
   margin: 0;
-  transition: transform 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 2px solid rgba(37, 253, 233, 0.1); /* Subtle border */
+}
+
+.poster:hover {
+  transform: scale(1.05) translateY(-5px);
+  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.4), 0 0 10px rgba(37, 253, 233, 0.3);
 }
 
 /* Trending Posters */
 .trending-poster {
-  width: 165px;
+  width: 190px; /* Increased from 165px */
   height: auto;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  border-radius: 12px; /* Increased from 8px */
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3); /* Enhanced shadow */
   margin: 0;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 2px solid rgba(37, 253, 233, 0.1); /* Subtle border */
+}
+
+.trending-poster:hover {
+  transform: scale(1.05);
+  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.4), 0 0 10px rgba(37, 253, 233, 0.3);
 }
 
 /* Ensure the container for trending posters is a row */
@@ -253,7 +294,7 @@ button:hover,
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.8); /* Keep the dark overlay but adjust if needed */
+  background: rgba(0, 0, 0, 0.8);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -263,34 +304,45 @@ button:hover,
 }
 
 .modal-content {
-  background: linear-gradient(135deg, rgba(25, 35, 70, 0.9), rgba(40, 50, 90, 0.9));
-  backdrop-filter: blur(15px);
+  background: linear-gradient(135deg, rgba(25, 35, 70, 0.92), rgba(40, 50, 90, 0.92));
+  backdrop-filter: blur(20px); /* Increased blur for more depth */
   padding: 40px;
-  border-radius: 20px;
+  border-radius: 24px; /* Slightly increased */
   width: 90%;
-  max-width: 550px;
+  max-width: 650px; /* Increased from 550px */
   max-height: 85vh;
   overflow-y: auto;
+  overflow-x: hidden; /* Prevent horizontal scrolling */
   color: #e0e7ff;
   position: relative;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-  border: 2px solid transparent;
-  border-image: linear-gradient(to right, #a3bffa, #6b7280, #a3bffa) 1;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(37, 253, 233, 0.15); /* Enhanced shadow with subtle glow */
+  border: 2px solid rgba(163, 191, 250, 0.2); /* More subtle border */
   animation: slideIn 0.7s ease-out;
 }
 
 .movie-of-the-month-modal {
-  background: transparent; /* Remove the gradient background */
-  border: none; /* Remove any border */
-  border-image: none; /* Remove the gradient border */
-  box-shadow: none; /* Remove the shadow */
-  animation: cinematicSlideIn 0.9s ease-out; /* Keep the animation if desired */
-  padding: 0; /* Remove any padding to avoid extra space */
+  background: rgba(20, 20, 30, 0.95);
+  border: none;
+  border-radius: 24px; /* Increased from 20px */
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(212, 175, 55, 0.25); /* Enhanced shadow */
+  animation: cinematicSlideIn 0.9s ease-out;
+  padding: 35px; /* Slightly increased padding */
+  max-width: 850px; /* Increased from 800px */
+  width: 90%;
+  margin: 0 auto;
+  max-height: 85vh;
+  overflow-y: auto;
+  overflow-x: hidden; /* Prevent horizontal scrolling */
 }
 
 .modal-content.movie-of-the-month-modal {
-  border: none; /* Override the default border */
-  border-image: none; /* Override the default border-image */
+  border: 2px solid rgba(212, 175, 55, 0.35); /* Slightly more visible border */
+  border-radius: 24px; /* Increased from 20px */
+  background: linear-gradient(145deg, rgba(30, 30, 45, 0.95), rgba(20, 20, 35, 0.95));
+  padding: 35px; /* Slightly increased padding */
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 0 30px rgba(212, 175, 55, 0.05); /* Subtle inner glow */
 }
 
 .movie-of-the-month-container {
@@ -298,90 +350,143 @@ button:hover,
   flex-direction: column;
   align-items: center;
   gap: 25px;
-  padding: 0; /* Remove padding */
-  background: transparent; /* Remove the gradient background */
-  border: none; /* Remove any border */
-  box-shadow: none; /* Remove the shadow */
-  border-radius: 0; /* Remove rounded corners if any */
+  padding: 20px;
+  position: relative;
+  z-index: 1;
 }
 
 .movie-of-the-month-poster {
-  width: 340px;
+  width: 380px; /* Increased from 340px */
   height: auto;
-  border-radius: 15px;
-  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4), 0 0 15px rgba(212, 175, 55, 0.3);
+  border-radius: 18px; /* Increased from 15px */
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(212, 175, 55, 0.35); /* Enhanced shadow */
   cursor: pointer;
   transition: transform 0.5s ease, box-shadow 0.5s ease;
   border: 4px solid rgba(212, 175, 55, 0.5);
   opacity: 0;
-  animation: spotlightReveal 1s ease-out 1s forwards;
+  animation: spotlightReveal 1s ease-out 0.5s forwards, pulseHighlight 3s infinite 1.5s;
+  position: relative;
+  z-index: 2;
 }
 
 .movie-of-the-month-poster:hover {
-  transform: scale(1.1);
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(212, 175, 55, 0.5);
+  transform: scale(1.05) translateY(-10px);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 30px rgba(212, 175, 55, 0.6);
 }
 
 .movie-of-the-month-modal h2 {
-  font-size: 2.5em;
-  margin-bottom: 15px;
+  font-size: 2.8em;
+  margin-bottom: 20px;
   color: #d4af37;
-  text-shadow: 3px 3px 8px rgba(0, 0, 0, 0.6), 0 0 10px rgba(212, 175, 55, 0.7);
+  text-shadow: 3px 3px 8px rgba(0, 0, 0, 0.6);
   font-weight: 700;
-  letter-spacing: 1.5px;
+  letter-spacing: 2px;
   animation: glow 2s ease-in-out infinite alternate;
+  text-align: center;
+  position: relative;
+}
+
+.movie-of-the-month-modal h2::after {
+  content: "";
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.7), transparent);
 }
 
 .movie-of-the-month-modal h3 {
-  font-size: 1.8em;
-  margin-bottom: 12px;
+  font-size: 1.9em; /* Slightly increased */
+  margin: 15px 0;
   color: #d4af37;
   font-weight: 600;
+  text-align: left; /* Changed from center to match alignment with other elements */
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5); /* Added text shadow */
+  letter-spacing: 0.5px; /* Added letter spacing */
 }
 
 .movie-of-the-month-modal .rating {
   font-size: 1.4em;
-  margin-bottom: 18px;
+  margin: 15px 0;
   color: #d4af37;
   font-style: italic;
   text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.movie-of-the-month-modal .rating::before {
+  content: "★";
+  font-style: normal;
+}
+
+.overview-container {
+  margin: 25px 0;
+  max-width: 750px;
+  width: 100%;
+  background: rgba(20, 20, 35, 0.4);
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(212, 175, 55, 0.1);
+  padding: 0;
+  max-height: 150px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(212, 175, 55, 0.5) rgba(20, 20, 35, 0.2);
+  display: block; /* Ensure it's displayed as a block */
 }
 
 .movie-of-the-month-modal .overview {
   font-size: 1.2em;
-  line-height: 2;
-  color: #d1d5db;
-  margin-bottom: 30px;
+  line-height: 1.8;
+  color: #e2e8f0;
+  margin: 0;
+  padding: 20px;
+  text-align: left;
 }
 
-.modal-content h2 {
-  font-size: 2em;
-  margin-bottom: 10px;
-  color: #a3bffa;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);
-  font-weight: 700;
-}
-
-.modal-content h3 {
-  font-size: 1.8em;
-  margin-bottom: 12px;
-  color: #e0e7ff;
-  font-weight: 600;
-}
-
-.modal-content .rating {
-  font-size: 1.4em;
-  margin-bottom: 18px;
-  color: #a3bffa;
-  font-style: italic;
-  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
-}
-
-.modal-content .overview {
+.movie-of-the-month-modal .trailer-button {
+  background: linear-gradient(45deg, #d4af37, #f5d76e);
+  color: #1a202c;
+  border: none;
+  border-radius: 30px;
+  padding: 12px 30px;
   font-size: 1.2em;
-  line-height: 2;
-  color: #d1d5db;
-  margin-bottom: 30px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+  margin-top: 10px;
+  position: relative;
+  overflow: hidden;
+}
+
+.movie-of-the-month-modal .trailer-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 7px 20px rgba(212, 175, 55, 0.4);
+  background: linear-gradient(45deg, #f5d76e, #d4af37);
+}
+
+.movie-of-the-month-modal .trailer-button:active {
+  transform: translateY(1px);
+}
+
+.movie-of-the-month-modal .modal-poster {
+  width: 250px; /* Set explicit width */
+  border-radius: 14px; /* Increased from 10px */
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4), 0 0 15px rgba(212, 175, 55, 0.3); /* Enhanced shadow */
+  border: 3px solid rgba(212, 175, 55, 0.45); /* Slightly more visible border */
+  margin-bottom: 15px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.movie-of-the-month-modal .modal-poster:hover {
+  transform: scale(1.03);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), 0 0 20px rgba(212, 175, 55, 0.4);
 }
 
 .message-modal {
@@ -480,6 +585,49 @@ button:hover,
   0% { opacity: 0; transform: scale(0.5); filter: brightness(0.5); }
   50% { opacity: 1; transform: scale(1.05); filter: brightness(1.2); }
   100% { opacity: 1; transform: scale(1); filter: brightness(1); }
+}
+
+@keyframes glow {
+  0% {
+    text-shadow: 0 0 5px rgba(212, 175, 55, 0.5), 0 0 10px rgba(212, 175, 55, 0.3);
+  }
+  100% {
+    text-shadow: 0 0 10px rgba(212, 175, 55, 0.8), 0 0 20px rgba(212, 175, 55, 0.5), 0 0 30px rgba(212, 175, 55, 0.3);
+  }
+}
+
+@keyframes spotlightReveal {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes cinematicSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulseHighlight {
+  0% {
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.5), 0 0 20px rgba(212, 175, 55, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(212, 175, 55, 0.8), 0 0 30px rgba(212, 175, 55, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 10px rgba(212, 175, 55, 0.5), 0 0 20px rgba(212, 175, 55, 0.3);
+  }
 }
 
 .button-disabled {
@@ -665,6 +813,145 @@ button:hover,
   font-size: 0.9em;
 }
 
+/* Additional Movie of the Month Styles */
+.spotlight-text {
+  color: rgba(212, 175, 55, 0.8);
+  font-size: 1.1em;
+  margin-top: -10px;
+  font-style: italic;
+  animation: glow 2s ease-in-out infinite alternate;
+}
+
+.movie-details-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  align-items: center;
+}
+
+.movie-details-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.movie-details-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 30px; /* Increased from 25px */
+  margin: 20px 0; /* Increased from 15px */
+  width: 100%;
+  max-width: 750px; /* Increased from 700px */
+  background: rgba(20, 20, 35, 0.4); /* Subtle background */
+  padding: 25px; /* Added padding */
+  border-radius: 16px; /* Added rounded corners */
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2); /* Added shadow */
+  border: 1px solid rgba(212, 175, 55, 0.15); /* Subtle border */
+}
+
+.movie-details-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  flex: 1;
+  padding: 5px 0; /* Added padding */
+}
+
+.movie-actions {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.genres {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.genre-tag {
+  background: rgba(212, 175, 55, 0.2);
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  color: #d4af37;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 0.9em;
+  font-weight: 500;
+}
+
+.movie-actions {
+  display: flex;
+  gap: 15px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.trailer-icon {
+  margin-right: 8px;
+}
+
+.back-button {
+  background: rgba(212, 175, 55, 0.15);
+  color: #d4af37;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 30px;
+  padding: 12px 25px;
+  font-size: 1.1em;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.back-button:hover {
+  background: rgba(212, 175, 55, 0.25);
+  transform: translateY(-3px);
+}
+
+.back-button:active {
+  transform: translateY(1px);
+}
+
+/* Media Queries for Movie of the Month */
+@media (max-width: 768px) {
+  .movie-details-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 15px;
+    gap: 15px;
+  }
+
+  .movie-details-info {
+    align-items: center;
+  }
+
+  .movie-of-the-month-modal h2 {
+    font-size: 2.2em;
+  }
+
+  .movie-of-the-month-modal h3 {
+    font-size: 1.5em;
+    text-align: center;
+  }
+
+  .movie-of-the-month-poster {
+    width: 280px;
+  }
+
+  .movie-details-container {
+    padding: 0;
+  }
+
+  .movie-actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+
 /* Tablet Adjustments (max-width: 768px) */
 @media (max-width: 768px) {
   .tip-button {
@@ -730,7 +1017,7 @@ button:hover,
     margin-top: 15px;
   }
   .poster {
-    width: 80px;
+    width: 110px; /* Increased from 80px but still mobile-friendly */
   }
   .trending-section h2 {
     font-size: 0.9em;
@@ -742,7 +1029,7 @@ button:hover,
     gap: 10px;
   }
   .trending-poster {
-    width: 88px;
+    width: 120px; /* Increased from 88px but still mobile-friendly */
   }
   .trending-container {
     gap: 15px;
@@ -765,6 +1052,10 @@ button:hover,
   .modal-content .overview {
     font-size: 0.85em;
   }
+  .overview-container {
+    max-height: 130px;
+    margin: 20px 0;
+  }
   .trailer-button {
     padding: 8px 15px;
     font-size: 0.9em;
@@ -785,7 +1076,7 @@ button:hover,
     font-size: 0.9em;
   }
   .movie-of-the-month-poster {
-    width: 200px;
+    width: 240px; /* Increased from 200px but still mobile-friendly */
   }
   .dr-filmbot-section {
     width: 90%;
@@ -889,6 +1180,11 @@ button:hover,
   .movie-of-the-month-modal h2 {
     font-size: 1.3em;
   }
+  .movie-details-header {
+    padding: 10px;
+    gap: 10px;
+    margin: 10px 0;
+  }
   .modal-content h3 {
     font-size: 0.95em;
   }
@@ -897,6 +1193,10 @@ button:hover,
   }
   .modal-content .overview {
     font-size: 0.75em;
+  }
+  .overview-container {
+    max-height: 120px;
+    margin: 15px 0;
   }
   .trailer-button {
     padding: 6px 12px;
@@ -919,7 +1219,7 @@ button:hover,
     font-size: 0.8em;
   }
   .movie-of-the-month-poster {
-    width: 150px;
+    width: 180px; /* Increased from 150px but still mobile-friendly */
   }
   .dr-filmbot-section {
     width: 95%;
@@ -944,4 +1244,214 @@ button:hover,
   .random-pick-text {
     font-size: 0.8em;
   }
+}
+
+/* Credits Information Styles */
+.credits-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 15px;
+  width: 100%;
+}
+
+.credit-section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px; /* Increased from 6px */
+  align-items: baseline;
+  margin-bottom: 8px; /* Added margin */
+}
+
+.credit-label {
+  color: #d4af37;
+  font-weight: 600;
+  font-size: 1.05em; /* Slightly increased */
+  min-width: 75px; /* Increased from 70px */
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3); /* Added text shadow */
+}
+
+.credit-names {
+  color: #e2e8f0;
+  font-size: 1.05em; /* Slightly increased */
+  line-height: 1.5; /* Increased from 1.4 */
+  font-weight: 500; /* Added font weight */
+}
+
+@media (max-width: 768px) {
+  .credit-section {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 2px;
+  }
+
+  .credit-label {
+    min-width: auto;
+  }
+}
+
+/* Watch Providers Styles - Simplified */
+.watch-providers {
+  margin: 25px auto;
+  width: 100%;
+  max-width: 700px;
+  background: rgba(20, 20, 35, 0.5);
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.watch-title {
+  color: #d4af37;
+  font-size: 1.3em;
+  margin-bottom: 20px;
+  text-align: center;
+  font-weight: 600;
+  position: relative;
+}
+
+.watch-title::after {
+  content: "";
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.7), transparent);
+}
+
+.provider-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+  width: 100%;
+  padding-top: 10px;
+}
+
+.provider-logo-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 80px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.provider-logo-container:hover {
+  transform: translateY(-5px);
+}
+
+.provider-logo {
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  object-fit: cover;
+  border: 2px solid rgba(212, 175, 55, 0.3);
+  transition: all 0.3s ease;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.provider-logo:hover {
+  border-color: rgba(212, 175, 55, 0.7);
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
+}
+
+.provider-name {
+  font-size: 0.8em;
+  color: #e2e8f0;
+  margin-top: 8px;
+  text-align: center;
+  max-width: 80px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.no-providers {
+  text-align: center;
+  color: #a0aec0;
+  font-style: italic;
+  margin: 15px 0;
+}
+
+.more-providers-link {
+  color: #d4af37;
+  text-decoration: none;
+  font-size: 1em;
+  margin-top: 15px;
+  display: inline-block;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  padding: 8px 16px;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  border-radius: 20px;
+  background-color: rgba(212, 175, 55, 0.1);
+}
+
+.more-providers-link:hover {
+  color: #f5d76e;
+  background-color: rgba(212, 175, 55, 0.2);
+  border-color: rgba(212, 175, 55, 0.5);
+}
+
+.movie-actions {
+  margin-top: 25px;
+  margin-bottom: 10px;
+}
+
+@media (max-width: 768px) {
+  .watch-providers {
+    padding: 15px;
+  }
+
+  .provider-logo {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+/* Add custom scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px; /* For horizontal scrollbars */
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(30, 40, 70, 0.5);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(37, 253, 233, 0.5);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(37, 253, 233, 0.7);
+}
+
+/* Custom scrollbar for movie of the month overview */
+.overview-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.overview-container::-webkit-scrollbar-track {
+  background: rgba(20, 20, 35, 0.2);
+  border-radius: 6px;
+}
+
+.overview-container::-webkit-scrollbar-thumb {
+  background: rgba(212, 175, 55, 0.5);
+  border-radius: 6px;
+}
+
+.overview-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(212, 175, 55, 0.7);
 }

@@ -16,8 +16,10 @@ import whatsappIcon from './whatsapp-icon.png';
 import instagramIcon from './instagram-icon.png';
 import tipIcon from './tip-icon.png';
 import drFilmBotIllustration from './dr-filmbot-illustration.png'; // Import your illustration
+import FilmOfMonth from './components/FilmOfMonth';
 
 // Helper function to convert a string to a URL-friendly slug
+// eslint-disable-next-line no-unused-vars
 const slugify = (text) => {
   return text
     .toString()
@@ -26,6 +28,71 @@ const slugify = (text) => {
     .replace(/\s+/g, '-') // Replace spaces with -
     .replace(/[^\w-]+/g, '') // Remove all non-word chars except hyphen
     .replace(/--+/g, '-'); // Replace multiple - with single -
+};
+
+// Helper function to generate smart search URLs for streaming platforms
+const generateSmartSearchUrl = (provider, movieDetails) => {
+  try {
+    const title = movieDetails.title || '';
+    const releaseYear = movieDetails.release_date ? movieDetails.release_date.split('-')[0] : '';
+
+    // Default URL (fallback) - links to JustWatch search
+    let url = `https://www.justwatch.com/us/search?q=${encodeURIComponent(title)}`;
+
+    // Map provider IDs to their respective search URLs
+    switch(provider.provider_id) {
+      // Netflix
+      case 8:
+        url = `https://www.netflix.com/search?q=${encodeURIComponent(title)}`;
+        break;
+
+      // Amazon Prime
+      case 9:
+        url = `https://www.amazon.com/s?k=${encodeURIComponent(title + ' ' + releaseYear)}&i=instant-video`;
+        break;
+
+      // Disney+
+      case 337:
+        url = `https://www.disneyplus.com/search?q=${encodeURIComponent(title)}`;
+        break;
+
+      // HBO Max/Max
+      case 384:
+        url = `https://play.max.com/search?q=${encodeURIComponent(title)}`;
+        break;
+
+      // Hulu
+      case 15:
+        url = `https://www.hulu.com/search?q=${encodeURIComponent(title)}`;
+        break;
+
+      // Apple TV+
+      case 2:
+        url = `https://tv.apple.com/search?term=${encodeURIComponent(title)}`;
+        break;
+
+      // Paramount+
+      case 531:
+        url = `https://www.paramountplus.com/search/?q=${encodeURIComponent(title)}`;
+        break;
+
+      // Peacock
+      case 386:
+        url = `https://www.peacocktv.com/search?q=${encodeURIComponent(title)}`;
+        break;
+
+      // Default to JustWatch search (already set as default)
+      default:
+        // URL is already set to JustWatch search by default
+        break;
+    }
+
+    return url;
+  } catch (error) {
+    console.error('Error generating smart search URL:', error);
+    // Fallback to JustWatch if anything goes wrong
+    return `https://www.justwatch.com/us/search?q=${encodeURIComponent(movieDetails.title || '')}`;
+  }
 };
 
 function App() {
@@ -128,12 +195,71 @@ function App() {
         const videosResponse = await axios.get(
           `https://api.themoviedb.org/3/movie/${movieId}/videos?api_key=${API_KEY}&_=${timestamp}`
         );
+        // Fetch credits information (cast and crew)
+        const creditsResponse = await axios.get(
+          `https://api.themoviedb.org/3/movie/${movieId}/credits?api_key=${API_KEY}&_=${timestamp}`
+        );
+        // Fetch streaming providers
+        const providersResponse = await axios.get(
+          `https://api.themoviedb.org/3/movie/${movieId}/watch/providers?api_key=${API_KEY}&_=${timestamp}`
+        );
+
         const trailer = videosResponse.data.results.find(
           (video) => video.type === 'Trailer' && video.site === 'YouTube'
         );
+
+        // Extract director, writers, and top cast
+        const directors = creditsResponse.data.crew.filter(person => person.job === 'Director');
+        const writers = creditsResponse.data.crew.filter(person =>
+          person.job === 'Screenplay' || person.job === 'Writer' || person.job === 'Story'
+        );
+        const topCast = creditsResponse.data.cast.slice(0, 5); // Get top 5 cast members
+
+        // Extract streaming providers (prioritize US, then fall back to any available country)
+        let streamingServices = [];
+        const providerResults = providersResponse.data.results;
+        if (providerResults) {
+          const country = providerResults['US'] ? 'US' : Object.keys(providerResults)[0];
+          const providerData = country ? providerResults[country] : null;
+
+          if (providerData) {
+            // Combine flatrate, rent and buy providers
+            const allProviders = [];
+            if (providerData.flatrate) allProviders.push(...providerData.flatrate);
+            if (providerData.rent) allProviders.push(...providerData.rent);
+            if (providerData.buy) allProviders.push(...providerData.buy);
+
+            // Remove duplicates by provider_id
+            const uniqueProviders = allProviders.filter((provider, index, self) =>
+              index === self.findIndex((p) => p.provider_id === provider.provider_id)
+            );
+
+            streamingServices = uniqueProviders.map(provider => ({
+              name: provider.provider_name,
+              logo: `https://image.tmdb.org/t/p/original${provider.logo_path}`,
+              url: generateSmartSearchUrl(provider, detailsResponse.data),
+              provider_id: provider.provider_id
+            }));
+          }
+        }
+
+        // If no streaming services found, add a fallback to JustWatch search
+        if (streamingServices.length === 0) {
+          streamingServices = [{
+            name: "Find on JustWatch",
+            logo: "https://www.justwatch.com/appassets/img/logo/JustWatch-logo-large.webp",
+            url: `https://www.justwatch.com/us/search?q=${encodeURIComponent(detailsResponse.data.title)}`,
+            provider_id: "justwatch"
+          }];
+        }
+
         setMovieOfTheMonthDetails({
           ...detailsResponse.data,
           trailerKey: trailer ? trailer.key : null,
+          directors,
+          writers,
+          topCast,
+          streamingServices
         });
       } catch (error) {
         console.error('Error fetching Film of the Month:', error);
@@ -174,6 +300,13 @@ function App() {
     localStorage.setItem('actor', actor);
     localStorage.setItem('director', director);
   }, [genre, duration, decade, language, actor, director]);
+
+  // For debugging
+  useEffect(() => {
+    if (movieOfTheMonthDetails && movieOfTheMonthDetails.streamingServices) {
+      console.log('Streaming Services:', movieOfTheMonthDetails.streamingServices);
+    }
+  }, [movieOfTheMonthDetails]);
 
   // getRecommendations (Updated for 16 suggestions with original language logic)
   const getRecommendations = async () => {
@@ -386,15 +519,61 @@ function App() {
       const videosResponse = await axios.get(
         `https://api.themoviedb.org/3/movie/${movieId}/videos?api_key=${API_KEY}&_=${timestamp}`
       );
+      // Fetch streaming providers
+      const providersResponse = await axios.get(
+        `https://api.themoviedb.org/3/movie/${movieId}/watch/providers?api_key=${API_KEY}&_=${timestamp}`
+      );
+
       if (detailsResponse.data.id !== movieId) {
         throw new Error(`Movie ID mismatch: requested ${movieId}, received ${detailsResponse.data.id}`);
       }
+
       const trailer = videosResponse.data.results.find(
         (video) => video.type === 'Trailer' && video.site === 'YouTube'
       );
+
+      // Extract streaming providers (prioritize US, then fall back to any available country)
+      let streamingServices = [];
+      const providerResults = providersResponse.data.results;
+      if (providerResults) {
+        const country = providerResults['US'] ? 'US' : Object.keys(providerResults)[0];
+        const providerData = country ? providerResults[country] : null;
+
+        if (providerData) {
+          // Combine flatrate, rent and buy providers
+          const allProviders = [];
+          if (providerData.flatrate) allProviders.push(...providerData.flatrate);
+          if (providerData.rent) allProviders.push(...providerData.rent);
+          if (providerData.buy) allProviders.push(...providerData.buy);
+
+          // Remove duplicates by provider_id
+          const uniqueProviders = allProviders.filter((provider, index, self) =>
+            index === self.findIndex((p) => p.provider_id === provider.provider_id)
+          );
+
+          streamingServices = uniqueProviders.map(provider => ({
+            name: provider.provider_name,
+            logo: `https://image.tmdb.org/t/p/original${provider.logo_path}`,
+            url: generateSmartSearchUrl(provider, detailsResponse.data),
+            provider_id: provider.provider_id
+          }));
+        }
+      }
+
+      // If no streaming services found, add a fallback to JustWatch search
+      if (streamingServices.length === 0) {
+        streamingServices = [{
+          name: "Find on JustWatch",
+          logo: "https://www.justwatch.com/appassets/img/logo/JustWatch-logo-large.webp",
+          url: `https://www.justwatch.com/us/search?q=${encodeURIComponent(detailsResponse.data.title)}`,
+          provider_id: "justwatch"
+        }];
+      }
+
       setMovieDetails({
         ...detailsResponse.data,
         trailerKey: trailer ? trailer.key : null,
+        streamingServices: streamingServices
       });
       setSelectedMovie(movieId);
     } catch (error) {
@@ -586,12 +765,12 @@ function App() {
       const response = await axios.post(
         'https://api.openai.com/v1/chat/completions',
         {
-          model: 'gpt-3.5-turbo',
+          model: 'gpt-4o-mini',
           messages: [
             {
               role: 'system',
               content:
-                'You are a friendly and knowledgeable movie expert named Dr FilmBot who provides personalized film recommendations. When asked for a recommendation, suggest exactly three movies that match the user’s mood or preferences. For each movie, provide the title, year, a short description, and one memorable quote to spark interest. Format your response as a list: 1. Movie Title (Year) - Short Description - "Memorable Quote". 2. Movie Title (Year) - Short Description - "Memorable Quote". 3. Movie Title (Year) - Short Description - "Memorable Quote".',
+                'You are a friendly and knowledgeable movie expert named Dr FilmBot who provides personalized film recommendations. When asked for a recommendation, suggest exactly seven movies that match the user’s mood or preferences. For each movie, provide the title, year, a short description, and one memorable quote to spark interest. Format your response as a list: 1. Movie Title (Year) - Short Description - "Memorable Quote". 2. Movie Title (Year) - Short Description - "Memorable Quote". 3. Movie Title (Year) - Short Description - "Memorable Quote". 4. Movie Title (Year) - Short Description - "Memorable Quote". 5. Movie Title (Year) - Short Description - "Memorable Quote". 6. Movie Title (Year) - Short Description - "Memorable Quote". 7. Movie Title (Year) - Short Description - "Memorable Quote".',
             },
             { role: 'user', content: userPrompt },
           ],
@@ -648,7 +827,7 @@ function App() {
       );
       console.log('Suggestions with posters:', suggestionsWithPosters);
 
-      setDrFilmBotSuggestions(suggestionsWithPosters.slice(0, 3));
+      setDrFilmBotSuggestions(suggestionsWithPosters.slice(0, 7));
     } catch (error) {
       console.error('Error in askDrFilmBot:', error.message);
       if (error.response) {
@@ -956,59 +1135,13 @@ function App() {
 
       {/* Movie of the Month Modal */}
       {showMovieOfTheMonth && movieOfTheMonthDetails && (
-        <div className="modal" onClick={closeMovieOfTheMonth}>
-          <div className="modal-content movie-of-the-month-modal" onClick={(e) => e.stopPropagation()}>
-            {!showDetails ? (
-              <div className="movie-of-the-month-container">
-                <h2>Our Movie of the Month</h2>
-                <img
-                  src={
-                    movieOfTheMonthDetails.poster_path
-                      ? `https://image.tmdb.org/t/p/w500${movieOfTheMonthDetails.poster_path}`
-                      : 'https://via.placeholder.com/300x450?text=No+Poster'
-                  }
-                  alt={`${movieOfTheMonthDetails.title} Poster`}
-                  className="movie-of-the-month-poster"
-                  onClick={toggleDetails}
-                  onError={(e) => { e.target.src = 'https://via.placeholder.com/300x450?text=No+Poster'; }}
-                />
-              </div>
-            ) : (
-              <>
-                <h2>Our Movie of the Month</h2>
-                {movieOfTheMonthDetails.error ? (
-                  <p>{movieOfTheMonthDetails.error}</p>
-                ) : (
-                  <>
-                    {movieOfTheMonthDetails.poster_path && (
-                      <img
-                        src={`https://image.tmdb.org/t/p/w200${movieOfTheMonthDetails.poster_path}`}
-                        alt={`${movieOfTheMonthDetails.title} Poster`}
-                        className="modal-poster"
-                        onError={(e) => { e.target.src = 'https://via.placeholder.com/200x300?text=No+Poster'; }}
-                      />
-                    )}
-                    <h3>
-                      {movieOfTheMonthDetails.title} (
-                      {movieOfTheMonthDetails.release_date ? movieOfTheMonthDetails.release_date.split('-')[0] : 'N/A'}
-                      )
-                    </h3>
-                    <p className="rating">Rating: {movieOfTheMonthDetails.vote_average}/10</p>
-                    <p className="overview">{movieOfTheMonthDetails.overview}</p>
-                    {movieOfTheMonthDetails.trailerKey && (
-                      <button className="trailer-button" onClick={playMovieOfTheMonthTrailer}>
-                        Watch Trailer
-                      </button>
-                    )}
-                  </>
-                )}
-                <button className="trailer-button" onClick={toggleDetails} style={{ marginTop: '10px' }}>
-                  Back to Poster
-                </button>
-              </>
-            )}
-          </div>
-        </div>
+        <FilmOfMonth
+          movieOfTheMonthDetails={movieOfTheMonthDetails}
+          showDetails={showDetails}
+          toggleDetails={toggleDetails}
+          closeMovieOfTheMonth={closeMovieOfTheMonth}
+          playMovieOfTheMonthTrailer={playMovieOfTheMonthTrailer}
+        />
       )}
 
       {/* Movie Details Modal */}
@@ -1031,29 +1164,43 @@ function App() {
                 </h2>
                 <p className="rating">Rating: {movieDetails.vote_average}/10</p>
                 <p className="overview">{movieDetails.overview}</p>
-                {/* Watch Trailer Button */}
-                {movieDetails.trailerKey && (
-                  <button className="trailer-button" onClick={playTrailer}>
-                    Watch Trailer
-                  </button>
+
+                {/* Streaming Services Section */}
+                {movieDetails.streamingServices && movieDetails.streamingServices.length > 0 && (
+                  <div className="watch-providers">
+                    <h4 className="watch-title">Where to Watch</h4>
+                    <div className="provider-container">
+                      {movieDetails.streamingServices.map(provider => (
+                        <a
+                          key={provider.provider_id}
+                          href={provider.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="provider-logo-container"
+                          title={`Search for ${movieDetails.title} on ${provider.name}`}
+                        >
+                          <img
+                            src={provider.logo}
+                            alt={provider.name}
+                            className="provider-logo"
+                            onError={(e) => { e.target.src = 'https://via.placeholder.com/45x45?text=Logo'; }}
+                          />
+                          <span className="provider-name">{provider.name}</span>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
                 )}
-                {/* New Watch Now Button */}
-                <button
-                  className="watch-now-button"
-                  onClick={() =>
-                    window.open(
-                      `https://moviesanywhere.com/movie/${slugify(movieDetails.title)}?show=retailers`,
-                      '_blank'
-                    )
-                  }
-                  style={{ marginLeft: '10px' }}
-                >
-                  Watch Now
-                </button>
-                {/* Disclaimer for Movies Anywhere */}
-                <p className="disclaimer" style={{ fontSize: '0.8em', marginTop: '5px', color: '#d1d5db' }}>
-                  Note: Some movies may not be available on Movies Anywhere.
-                </p>
+
+                <div className="movie-actions">
+                  {/* Watch Trailer Button */}
+                  {movieDetails.trailerKey && (
+                    <button className="trailer-button" onClick={playTrailer}>
+                      <span className="trailer-icon">▶</span> Watch Trailer
+                    </button>
+                  )}
+                </div>
+
                 <div className="share-buttons">
                   <img src={xIcon} alt="Share on X" className="share-icon" onClick={() => shareOnX(movieDetails)} />
                   <img src={facebookIcon} alt="Share on Facebook" className="share-icon" onClick={() => shareOnFacebook(movieDetails)} />

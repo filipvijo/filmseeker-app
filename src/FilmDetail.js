@@ -8,6 +8,7 @@ const FilmDetail = () => {
   const { id } = useParams(); // Get the movie ID from the URL
   const [movie, setMovie] = useState(null);
   const [error, setError] = useState('');
+  const [watchProviders, setWatchProviders] = useState([]);
   const API_KEY = process.env.REACT_APP_TMDB_API_KEY;
 
   useEffect(() => {
@@ -18,6 +19,20 @@ const FilmDetail = () => {
           `https://api.themoviedb.org/3/movie/${id}?api_key=${API_KEY}&append_to_response=credits`
         );
         setMovie(response.data);
+        // Fetch watch providers
+        const providersRes = await axios.get(
+          `https://api.themoviedb.org/3/movie/${id}/watch/providers?api_key=${API_KEY}`
+        );
+        // Default to US, fallback to any available country
+        const country = providersRes.data.results['US']
+          ? 'US'
+          : Object.keys(providersRes.data.results)[0];
+        const providerData = country ? providersRes.data.results[country] : null;
+        if (providerData && providerData.flatrate) {
+          setWatchProviders(providerData.flatrate);
+        } else {
+          setWatchProviders([]);
+        }
       } catch (err) {
         console.error('Error fetching movie details:', err);
         setError('Failed to load movie details.');
@@ -101,6 +116,31 @@ const FilmDetail = () => {
           alt={`${movie.title} Poster`}
           style={{ width: '300px', borderRadius: '8px', marginBottom: '20px' }}
         />
+      )}
+
+      {/* Streaming Providers Section */}
+      {watchProviders.length > 0 && (
+        <div style={{ margin: '20px 0' }}>
+          <strong>Available on:</strong>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', marginTop: '10px', flexWrap: 'wrap' }}>
+            {watchProviders.map((provider) => (
+              <a
+                key={provider.provider_id}
+                href={`https://www.justwatch.com/us/provider/${provider.provider_name.toLowerCase().replace(/\s+/g, '-')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                title={provider.provider_name}
+                style={{ display: 'inline-block' }}
+              >
+                <img
+                  src={`https://image.tmdb.org/t/p/w45${provider.logo_path}`}
+                  alt={provider.provider_name}
+                  style={{ width: '45px', height: '45px', borderRadius: '8px', background: '#fff' }}
+                />
+              </a>
+            ))}
+          </div>
+        </div>
       )}
 
       <div style={{ maxWidth: '600px', margin: '0 auto', textAlign: 'left', fontSize: '1.1em', lineHeight: '1.6' }}>
