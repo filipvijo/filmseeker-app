@@ -17,6 +17,9 @@ import instagramIcon from './instagram-icon.png';
 import tipIcon from './tip-icon.png';
 import drFilmBotIllustration from './dr-filmbot-illustration.png'; // Import your illustration
 import FilmOfMonth from './components/FilmOfMonth';
+import { auth } from './firebase';
+import Login from './Login';
+import { onAuthStateChanged } from 'firebase/auth';
 
 // Helper function to convert a string to a URL-friendly slug
 // eslint-disable-next-line no-unused-vars
@@ -111,7 +114,6 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [showMovieOfTheMonth, setShowMovieOfTheMonth] = useState(false);
   const [movieOfTheMonthDetails, setMovieOfTheMonthDetails] = useState(null);
-  const [showDetails, setShowDetails] = useState(false);
   const [showAboutUs, setShowAboutUs] = useState(false);
   const [showMessagePopup, setShowMessagePopup] = useState(false);
 
@@ -121,6 +123,9 @@ function App() {
   const [isDrFilmBotLoading, setIsDrFilmBotLoading] = useState(false);
 
   const [message, setMessage] = useState('');
+
+  // User State
+  const [user, setUser] = useState(null);
 
   // TMDB API key from your .env file
   const API_KEY = process.env.REACT_APP_TMDB_API_KEY;
@@ -300,6 +305,13 @@ function App() {
     localStorage.setItem('actor', actor);
     localStorage.setItem('director', director);
   }, [genre, duration, decade, language, actor, director]);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
 
   // For debugging
   useEffect(() => {
@@ -624,10 +636,6 @@ function App() {
     setShowMovieOfTheMonth(false);
   };
 
-  const toggleDetails = () => {
-    setShowDetails(!showDetails);
-  };
-
   const playMovieOfTheMonthTrailer = () => {
     if (movieOfTheMonthDetails && movieOfTheMonthDetails.trailerKey) {
       window.open(`https://www.youtube.com/watch?v=${movieOfTheMonthDetails.trailerKey}`, '_blank');
@@ -849,380 +857,473 @@ function App() {
 
   return (
     <div className="App">
-      <img
-        src={logo}
-        alt="FilmSeeker Logo"
-        className="logo"
-        style={{ width: '287.5px', cursor: 'pointer' }}
-        onClick={openAboutUs}
-      />
-
-      {/* About Us Modal */}
-      {showAboutUs && (
-        <div className="modal" onClick={closeAboutUs}>
-          <div className="modal-content about-us-modal" onClick={(e) => e.stopPropagation()}>
-            <h2>THANK YOU</h2>
-            <p>
-              Thank you for being here.<br />
-              And most of all, thank you for being curious about films.
-            </p>
-            <p>
-              At FilmSeeker, our purpose is simple:<br />
-              To help you find the next film you're going to watch.<br />
-              And then come back for another.<br />
-              And another.<br />
-              And another.<br />
-              We believe there's always another story waiting to be found.
-            </p>
-            <p>
-              We don’t ask for your email.<br />
-              We don’t gather likes.<br />
-              We don’t make watch lists.<br />
-              There are plenty of great apps out there for that.<br />
-              We just want to help you find your next great film.<br />
-              That’s it.
-            </p>
-            <p>
-              And while you’re here, we hope you’ll feel encouraged to explore.<br />
-              To experiment.<br />
-              To discover films you might not have chosen otherwise.<br />
-              Because sometimes, the most unexpected story can awaken something new inside you.<br />
-              A film in a foreign language, made in a faraway place, can be surprisingly close to your own life experience.
-            </p>
-            <p>
-              We’re always open to your suggestions, comments, feedback—even emojis.<br />
-              Click the Message button and reach out any way you like.<br />
-              We’d love to hear from you.
-            </p>
-            <p>
-              And if you enjoyed your film recommendation or found something special through us,<br />
-              you can always leave us a tip by clicking the Tip button on the main page.<br />
-              It helps us keep the project alive—and makes our day!
-            </p>
-            <p>
-              Thank you for taking the time to read this modest text.<br />
-              And thank you on behalf of all the artists who will be discovered—or rediscovered—through you.
-            </p>
-            <p>Enjoy the Films.</p>
-            <div className="modal-buttons">
-              <button onClick={openMessagePopup} className="message-button" title="Send us a message">
-                Message
-              </button>
-              <button className="close-button" onClick={closeAboutUs}>
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Message Popup */}
-      {showMessagePopup && (
-        <div className="modal" onClick={closeMessagePopup}>
-          <div className="modal-content message-modal" onClick={(e) => e.stopPropagation()}>
-            <h2>Send Us a Message</h2>
-            <textarea
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Type your message here..."
-              className="message-input"
-            />
-            <div className="modal-buttons">
-              <button onClick={sendMessage} className="send-button">
-                Send It
-              </button>
-              <button onClick={closeMessagePopup} className="close-button">
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Trending Films */}
-      {trendingFilms.length > 0 && (
-        <div className="trending-section">
-          <div className="trending-container">
-            <div className="trending-recommendation">
-              <h2>Top 3 Trending Films This Week</h2>
-              <div className="poster-container">
-                {trendingFilms.map((film, index) => (
-                  <div key={index} className="recommendation-item">
-                    {film.Poster ? (
-                      <img
-                        src={film.Poster}
-                        alt={`Trending Movie Poster ${index + 1}`}
-                        className="trending-poster"
-                        onClick={() => fetchMovieDetails(film.id)}
-                      />
-                    ) : (
-                      <p>{film.Title}</p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Film of the Month Button */}
-      <div className="film-of-the-month-button-container">
-        <button onClick={() => setShowMovieOfTheMonth(true)} className="film-of-the-month-button">
-          Film Of The Month
-        </button>
-      </div>
-
-      {/* Preferences Form */}
-      <h1>Add your Preferences</h1>
-      <div className="input-container">
-        <div className="input-group">
-          <img src={iconGenre} alt="Genre Icon" />
-          <label>Select a Genre!</label>
-          <select value={genre} onChange={(e) => setGenre(e.target.value)}>
-            <option value="">Choose a genre</option>
-            {genres.map((g) => (
-              <option key={g.id} value={g.name}>
-                {g.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="input-group">
-          <img src={iconMood} alt="Duration Icon" />
-          <label>Film Duration</label>
-          <select value={duration} onChange={(e) => setDuration(e.target.value)}>
-            <option value="">Any duration</option>
-            <option value="short">Short (&lt;90 min)</option>
-            <option value="medium">Medium (90-120 min)</option>
-            <option value="long">Long (&gt;120 min)</option>
-          </select>
-        </div>
-        <div className="input-group">
-          <img src={iconLength} alt="Decade Icon" />
-          <label>Movie Decade</label>
-          <select value={decade} onChange={(e) => setDecade(e.target.value)}>
-            <option value="">Any decade</option>
-            <option value="1950">1950s</option>
-            <option value="1960">1960s</option>
-            <option value="1970">1970s</option>
-            <option value="1980">1980s</option>
-            <option value="1990">1990s</option>
-            <option value="2000">2000s</option>
-            <option value="2010">2010s</option>
-            <option value="2020">2020s</option>
-          </select>
-        </div>
-        <div className="input-group">
-          <img src={iconLanguage} alt="Language Icon" />
-          <label>Preferred Language</label>
-          <select value={language} onChange={(e) => setLanguage(e.target.value)}>
-            <option value="">Any language</option>
-            {Object.keys(languageMap)
-              .filter((lang) => lang !== '')
-              .sort()
-              .map((lang) => (
-                <option key={lang} value={lang}>
-                  {lang.charAt(0).toUpperCase() + lang.slice(1)}
-                </option>
-              ))}
-          </select>
-        </div>
-        <div className="input-group">
-          <img src={iconActor} alt="Actor Icon" />
-          <label>Actress/Actor</label>
-          <input value={actor} onChange={(e) => setActor(e.target.value)} placeholder="Enter Actress/Actor" />
-        </div>
-        <div className="input-group">
-          <img src={iconDirector} alt="Director Icon" />
-          <label>Director</label>
-          <input value={director} onChange={(e) => setDirector(e.target.value)} placeholder="Enter Director" />
-        </div>
-      </div>
-
-      {/* Buttons */}
-      <div className="button-group">
-        <button onClick={getRecommendations} disabled={isLoading} className={isLoading ? 'button-disabled' : ''}>
-          {isLoading ? 'Loading...' : 'GET MY FILM'}
-        </button>
-      </div>
-
-      {/* Recommendations */}
-      <div className="recommendation">
-        {isLoading ? (
-          <div className="spinner"></div>
-        ) : recommendations.length > 0 ? (
-          recommendations.map((rec, index) => (
-            <div key={index} className="recommendation-item">
-              {rec.Poster ? (
-                <img src={rec.Poster} alt={`Movie Poster ${index + 1}`} className="poster" onClick={() => fetchMovieDetails(rec.id)} />
-              ) : (
-                <p>{rec.Title}</p>
-              )}
-            </div>
-          ))
-        ) : (
-          <p className="no-recommendations">
-            No recommendations yet. Select your preferences and click "GET MY FILM!"
-          </p>
-        )}
-      </div>
-
-      <div className="surprise-button-container">
-        <button onClick={getRandomRecommendation} disabled={isLoading} className={isLoading ? 'button-disabled surprise-button' : 'surprise-button'}>
-          {isLoading ? 'Loading...' : 'Surprise Me!'}
-        </button>
-        <p className="random-pick-text">Random Pick</p>
-      </div>
-
-      {/* Dr FilmBot Section */}
-      <div className="dr-filmbot-section">
-        <img
-          src={drFilmBotIllustration}
-          alt="Dr FilmBot Illustration"
-          className="dr-filmbot-illustration"
-        />
-        <h2>Ask Dr FilmBot</h2>
-        <label htmlFor="dr-filmbot-input" style={{ display: 'block', marginBottom: '10px', color: '#d1d5db' }}>
-          Describe your mood or preferences:
-        </label>
-        <textarea
-          id="dr-filmbot-input"
-          rows="4"
-          placeholder="E.g., 'I want a funny sci-fi movie' or 'Something relaxing for tonight'"
-          value={drFilmBotUserInput}
-          onChange={(e) => setDrFilmBotUserInput(e.target.value)}
-          className="dr-filmbot-input-textarea"
-        />
-        <button
-          className="dr-filmbot-button"
-          onClick={() => askDrFilmBot(drFilmBotUserInput)}
-          disabled={isDrFilmBotLoading || !drFilmBotUserInput.trim()}
-        >
-          {isDrFilmBotLoading ? 'Loading...' : 'Get Recommendation'}
-        </button>
-        {isDrFilmBotLoading ? (
-          <div className="spinner" style={{ marginTop: '20px' }}></div>
-        ) : drFilmBotSuggestions.length > 0 ? (
-          <div className="dr-filmbot-response">
-            <h3>Movie Prescription:</h3>
-            <div className="recommendation">
-              {drFilmBotSuggestions.map((suggestion, index) => (
-                <div key={index} className="recommendation-item">
-                  {suggestion.poster ? (
-                    <img
-                      src={suggestion.poster}
-                      alt={`${suggestion.title} Poster`}
-                      className="poster"
-                      onClick={() => suggestion.id && fetchMovieDetails(suggestion.id)}
-                      onError={(e) => {
-                        console.log(`Failed to load poster for ${suggestion.title}:`, suggestion.poster);
-                        e.target.style.display = 'none';
-                      }}
-                    />
-                  ) : null}
-                  <p>{suggestion.title}{suggestion.year ? ` (${suggestion.year})` : ''}</p>
-                  <p>{suggestion.description}</p>
-                  {suggestion.quote && (
-                    <p className="movie-quote">"{suggestion.quote}"</p>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : null}
-      </div>
-
-      {/* Movie of the Month Modal */}
-      {showMovieOfTheMonth && movieOfTheMonthDetails && (
-        <FilmOfMonth
-          movieOfTheMonthDetails={movieOfTheMonthDetails}
-          showDetails={showDetails}
-          toggleDetails={toggleDetails}
-          closeMovieOfTheMonth={closeMovieOfTheMonth}
-          playMovieOfTheMonthTrailer={playMovieOfTheMonthTrailer}
-        />
-      )}
-
-      {/* Movie Details Modal */}
-      {selectedMovie && movieDetails && (
-        <div className="modal" onClick={closeModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            {movieDetails.error ? (
-              <p>{movieDetails.error}</p>
-            ) : movieDetails.id !== selectedMovie ? (
-              <p>Error: Movie ID mismatch.</p>
-            ) : (
-              <>
-                {movieDetails.poster_path && (
-                  <img src={`https://image.tmdb.org/t/p/w200${movieDetails.poster_path}`} alt={`${movieDetails.title} Poster`} className="modal-poster" onError={(e) => { e.target.src = 'https://via.placeholder.com/200x300?text=No+Poster'; }} />
-                )}
-                <h2>
-                  {movieDetails.title} (
-                  {movieDetails.release_date ? movieDetails.release_date.split('-')[0] : 'N/A'}
-                  )
-                </h2>
-                <p className="rating">Rating: {movieDetails.vote_average}/10</p>
-                <p className="overview">{movieDetails.overview}</p>
-
-                {/* Streaming Services Section */}
-                {movieDetails.streamingServices && movieDetails.streamingServices.length > 0 && (
-                  <div className="watch-providers">
-                    <h4 className="watch-title">Where to Watch</h4>
-                    <div className="provider-container">
-                      {movieDetails.streamingServices.map(provider => (
-                        <a
-                          key={provider.provider_id}
-                          href={provider.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="provider-logo-container"
-                          title={`Search for ${movieDetails.title} on ${provider.name}`}
-                        >
-                          <img
-                            src={provider.logo}
-                            alt={provider.name}
-                            className="provider-logo"
-                            onError={(e) => { e.target.src = 'https://via.placeholder.com/45x45?text=Logo'; }}
-                          />
-                          <span className="provider-name">{provider.name}</span>
-                        </a>
+      {user ? (
+        <div>
+          <img
+            src={logo}
+            alt="FilmSeeker Logo"
+            className="logo"
+            style={{ width: '287.5px', cursor: 'pointer' }}
+            onClick={openAboutUs}
+          />
+          <div className="section">
+            <div className="section-container">
+              <div className="dr-filmbot-section" style={{ textAlign: 'center' }}>
+                <img
+                  src={drFilmBotIllustration}
+                  alt="Dr FilmBot Illustration"
+                  className="dr-filmbot-illustration"
+                />
+                <h2 className="section-title">Ask Dr FilmBot</h2>
+                <label htmlFor="dr-filmbot-input" style={{ display: 'block', marginBottom: '10px', color: '#d1d5db' }}>
+                  Describe your mood or preferences:
+                </label>
+                <textarea
+                  id="dr-filmbot-input"
+                  rows="4"
+                  placeholder="E.g., 'I want a funny sci-fi movie' or 'Something relaxing for tonight'"
+                  value={drFilmBotUserInput}
+                  onChange={(e) => setDrFilmBotUserInput(e.target.value)}
+                  className="dr-filmbot-input-textarea"
+                />
+                <button
+                  className="dr-filmbot-button"
+                  onClick={() => askDrFilmBot(drFilmBotUserInput)}
+                  disabled={isDrFilmBotLoading || !drFilmBotUserInput.trim()}
+                >
+                  {isDrFilmBotLoading ? 'Loading...' : 'Get Recommendation'}
+                </button>
+                {isDrFilmBotLoading ? (
+                  <div className="spinner" style={{ marginTop: '20px' }}></div>
+                ) : drFilmBotSuggestions.length > 0 ? (
+                  <div className="dr-filmbot-response">
+                    <h3>Movie Prescription:</h3>
+                    <div className="recommendation">
+                      {drFilmBotSuggestions.map((suggestion, index) => (
+                        <div key={index} className="recommendation-item">
+                          {suggestion.poster ? (
+                            <img
+                              src={suggestion.poster}
+                              alt={`${suggestion.title} Poster`}
+                              className="poster"
+                              onClick={() => suggestion.id && fetchMovieDetails(suggestion.id)}
+                              onError={(e) => {
+                                console.log(`Failed to load poster for ${suggestion.title}:`, suggestion.poster);
+                                e.target.style.display = 'none';
+                                // Create and show placeholder
+                                const placeholder = document.createElement('div');
+                                placeholder.className = 'poster-placeholder';
+                                placeholder.textContent = suggestion.title;
+                                e.target.parentNode.appendChild(placeholder);
+                              }}
+                            />
+                          ) : (
+                            <div className="poster-placeholder">
+                              {suggestion.title}
+                            </div>
+                          )}
+                          <p>{suggestion.title}{suggestion.year ? ` (${suggestion.year})` : ''}</p>
+                          <p>{suggestion.description}</p>
+                          {suggestion.quote && (
+                            <p className="movie-quote">"{suggestion.quote}"</p>
+                          )}
+                        </div>
                       ))}
                     </div>
                   </div>
-                )}
-
-                <div className="movie-actions">
-                  {/* Watch Trailer Button */}
-                  {movieDetails.trailerKey && (
-                    <button className="trailer-button" onClick={playTrailer}>
-                      <span className="trailer-icon">▶</span> Watch Trailer
-                    </button>
-                  )}
-                </div>
-
-                <div className="share-buttons">
-                  <img src={xIcon} alt="Share on X" className="share-icon" onClick={() => shareOnX(movieDetails)} />
-                  <img src={facebookIcon} alt="Share on Facebook" className="share-icon" onClick={() => shareOnFacebook(movieDetails)} />
-                  <img src={whatsappIcon} alt="Share on WhatsApp" className="share-icon" onClick={() => shareOnWhatsApp(movieDetails)} />
-                  <img src={instagramIcon} alt="Share on Instagram" className="share-icon" onClick={() => shareOnInstagram(movieDetails)} />
-                </div>
-              </>
-            )}
+                ) : null}
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+          {/* Trending Films */}
+          {trendingFilms.length > 0 && (
+            <div className="section">
+              <div className="section-container section-alt">
+                <div className="trending-section">
+                  <div className="trending-container">
+                    <div className="trending-recommendation">
+                      <h2 className="section-title">Top 3 Trending Films This Week</h2>
+                      <div className="poster-container">
+                        {trendingFilms.map((film, index) => (
+                          <div key={index} className="recommendation-item">
+                            {film.Poster ? (
+                              <img
+                                src={film.Poster}
+                                alt={`Trending Movie Poster ${index + 1}`}
+                                className="trending-poster"
+                                onClick={() => fetchMovieDetails(film.id)}
+                              />
+                            ) : (
+                              <p>{film.Title}</p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          {/* Film of the Month Section */}
+          <div className="section">
+            <div className="section-container">
+              <h2 className="section-title">Film Of The Month</h2>
+              <div className="film-of-the-month-button-container">
+                <button onClick={() => setShowMovieOfTheMonth(true)} className="film-of-the-month-button">
+                  View This Month's Selection
+                </button>
+              </div>
+            </div>
+          </div>
+          {/* Preferences Form Section */}
+          <div className="section">
+            <div className="section-container section-alt">
+              <h2 className="section-title">Add Your Preferences</h2>
+              <div className="input-container">
+                <div className="input-group">
+                  <img src={iconGenre} alt="Genre Icon" />
+                  <label>Select a Genre!</label>
+                  <select value={genre} onChange={(e) => setGenre(e.target.value)}>
+                    <option value="">Choose a genre</option>
+                    {genres.map((g) => (
+                      <option key={g.id} value={g.name}>
+                        {g.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="input-group">
+                  <img src={iconMood} alt="Duration Icon" />
+                  <label>Film Duration</label>
+                  <select value={duration} onChange={(e) => setDuration(e.target.value)}>
+                    <option value="">Any duration</option>
+                    <option value="short">Short (&lt;90 min)</option>
+                    <option value="medium">Medium (90-120 min)</option>
+                    <option value="long">Long (&gt;120 min)</option>
+                  </select>
+                </div>
+                <div className="input-group">
+                  <img src={iconLength} alt="Decade Icon" />
+                  <label>Movie Decade</label>
+                  <select value={decade} onChange={(e) => setDecade(e.target.value)}>
+                    <option value="">Any decade</option>
+                    <option value="1950">1950s</option>
+                    <option value="1960">1960s</option>
+                    <option value="1970">1970s</option>
+                    <option value="1980">1980s</option>
+                    <option value="1990">1990s</option>
+                    <option value="2000">2000s</option>
+                    <option value="2010">2010s</option>
+                    <option value="2020">2020s</option>
+                  </select>
+                </div>
+                <div className="input-group">
+                  <img src={iconLanguage} alt="Language Icon" />
+                  <label>Preferred Language</label>
+                  <select value={language} onChange={(e) => setLanguage(e.target.value)}>
+                    <option value="">Any language</option>
+                    {Object.keys(languageMap)
+                      .filter((lang) => lang !== '')
+                      .sort()
+                      .map((lang) => (
+                        <option key={lang} value={lang}>
+                          {lang.charAt(0).toUpperCase() + lang.slice(1)}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+                <div className="input-group">
+                  <img src={iconActor} alt="Actor Icon" />
+                  <label>Actress/Actor</label>
+                  <input value={actor} onChange={(e) => setActor(e.target.value)} placeholder="Enter Actress/Actor" />
+                </div>
+                <div className="input-group">
+                  <img src={iconDirector} alt="Director Icon" />
+                  <label>Director</label>
+                  <input value={director} onChange={(e) => setDirector(e.target.value)} placeholder="Enter Director" />
+                </div>
+              </div>
+              {/* Buttons */}
+              <div className="button-group">
+                <button onClick={getRecommendations} disabled={isLoading} className={isLoading ? 'button-disabled' : ''}>
+                  {isLoading ? 'Loading...' : 'GET MY FILM'}
+                </button>
+              </div>
+            </div>
+          </div>
+          {/* Recommendations Section */}
+          <div className="section">
+            <div className="section-container">
+              <h2 className="section-title">Your Recommendations</h2>
+              <div className="recommendation">
+                {isLoading ? (
+                  <div className="spinner"></div>
+                ) : recommendations.length > 0 ? (
+                  recommendations.map((rec, index) => (
+                    <div key={index} className="recommendation-item">
+                      {rec.Poster ? (
+                        <img src={rec.Poster} alt={`Movie Poster ${index + 1}`} className="poster" onClick={() => fetchMovieDetails(rec.id)} />
+                      ) : (
+                        <p>{rec.Title}</p>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <p className="no-recommendations">
+                    No recommendations yet. Select your preferences and click "GET MY FILM!"
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
 
-      {/* Tip Button */}
-      <a
-        href="https://buymeacoffee.com/filmseeker"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="tip-button"
-        aria-label="Send a tip to support FilmSeeker"
-      >
-        <img src={tipIcon} alt="Tip Icon" className="tip-icon" />
-      </a>
+          {/* Surprise Me Section */}
+          <div className="section">
+            <div className="section-container section-alt">
+              <h2 className="section-title">Feeling Adventurous?</h2>
+              <div className="surprise-button-container">
+                <button onClick={getRandomRecommendation} disabled={isLoading} className={isLoading ? 'button-disabled surprise-button' : 'surprise-button'}>
+                  {isLoading ? 'Loading...' : 'Surprise Me!'}
+                </button>
+                <p className="random-pick-text">Get a completely random film recommendation</p>
+              </div>
+            </div>
+          </div>
+          {/* Movie of the Month Modal */}
+          {showMovieOfTheMonth && movieOfTheMonthDetails && (
+            <FilmOfMonth
+              movieOfTheMonthDetails={movieOfTheMonthDetails}
+              closeMovieOfTheMonth={closeMovieOfTheMonth}
+              playMovieOfTheMonthTrailer={playMovieOfTheMonthTrailer}
+            />
+          )}
+          {/* Movie Details Modal */}
+          {selectedMovie && movieDetails && (
+            <div className="modal" onClick={closeModal}>
+              <div className="modal-content movie-detail-modal" onClick={(e) => e.stopPropagation()}>
+                {movieDetails.error ? (
+                  <p>{movieDetails.error}</p>
+                ) : movieDetails.id !== selectedMovie ? (
+                  <p>Error: Movie ID mismatch.</p>
+                ) : (
+                  <div className="movie-detail-container">
+                    <div className="movie-detail-header">
+                      <h2 className="movie-detail-title">
+                        {movieDetails.title}
+                        <span className="movie-detail-year">
+                          ({movieDetails.release_date ? movieDetails.release_date.split('-')[0] : 'N/A'})
+                        </span>
+                      </h2>
+                    </div>
+
+                    <div className="movie-detail-content">
+                      <div className="movie-detail-poster-container">
+                        {movieDetails.poster_path && (
+                          <img
+                            src={`https://image.tmdb.org/t/p/w300${movieDetails.poster_path}`}
+                            alt={`${movieDetails.title} Poster`}
+                            className="movie-detail-poster"
+                            onError={(e) => { e.target.src = 'https://via.placeholder.com/300x450?text=No+Poster'; }}
+                          />
+                        )}
+                      </div>
+
+                      <div className="movie-detail-info">
+                        <div className="movie-detail-meta">
+                          <div className="movie-detail-rating">
+                            <span className="rating-star">★</span> {movieDetails.vote_average.toFixed(1)}/10
+                          </div>
+
+                          {movieDetails.genres && movieDetails.genres.length > 0 && (
+                            <div className="movie-detail-genres">
+                              {movieDetails.genres.map(genre => (
+                                <span key={genre.id} className="movie-genre-tag">{genre.name}</span>
+                              ))}
+                            </div>
+                          )}
+
+                          <div className="movie-detail-runtime">
+                            <span className="detail-label">Runtime:</span> {movieDetails.runtime} min
+                          </div>
+
+                          {movieDetails.credits && movieDetails.credits.crew && (
+                            <div className="movie-detail-director">
+                              <span className="detail-label">Director:</span> {
+                                movieDetails.credits.crew
+                                  .filter(person => person.job === 'Director')
+                                  .map(director => director.name)
+                                  .join(', ') || 'Unknown'
+                              }
+                            </div>
+                          )}
+
+                          {movieDetails.credits && movieDetails.credits.cast && (
+                            <div className="movie-detail-cast">
+                              <span className="detail-label">Cast:</span> {
+                                movieDetails.credits.cast
+                                  .slice(0, 3)
+                                  .map(actor => actor.name)
+                                  .join(', ')
+                              }
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="movie-detail-overview">
+                      <h3 className="overview-title">Overview</h3>
+                      <p>{movieDetails.overview}</p>
+                    </div>
+
+                    {/* Streaming Services Section */}
+                    {movieDetails.streamingServices && movieDetails.streamingServices.length > 0 && (
+                      <div className="movie-detail-streaming">
+                        <h3 className="streaming-title">Where to Watch</h3>
+                        <div className="streaming-providers">
+                          {movieDetails.streamingServices.map(provider => (
+                            <a
+                              key={provider.provider_id}
+                              href={provider.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="provider-link"
+                              title={`Watch ${movieDetails.title} on ${provider.name}`}
+                            >
+                              <img
+                                src={provider.logo}
+                                alt={provider.name}
+                                className="provider-logo"
+                                onError={(e) => { e.target.src = 'https://via.placeholder.com/45x45?text=Logo'; }}
+                              />
+                              <span className="provider-name">{provider.name}</span>
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="movie-detail-actions">
+                      {/* Watch Trailer Button */}
+                      {movieDetails.trailerKey && (
+                        <button className="movie-trailer-button" onClick={playTrailer}>
+                          <span className="trailer-icon">▶</span> Watch Trailer
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="movie-detail-share">
+                      <h3 className="share-title">Share this film</h3>
+                      <div className="share-buttons">
+                        <button className="share-button x-button" onClick={() => shareOnX(movieDetails)}>
+                          <img src={xIcon} alt="Share on X" className="share-icon" /> Twitter
+                        </button>
+                        <button className="share-button facebook-button" onClick={() => shareOnFacebook(movieDetails)}>
+                          <img src={facebookIcon} alt="Share on Facebook" className="share-icon" /> Facebook
+                        </button>
+                        <button className="share-button whatsapp-button" onClick={() => shareOnWhatsApp(movieDetails)}>
+                          <img src={whatsappIcon} alt="Share on WhatsApp" className="share-icon" /> WhatsApp
+                        </button>
+                        <button className="share-button instagram-button" onClick={() => shareOnInstagram(movieDetails)}>
+                          <img src={instagramIcon} alt="Share on Instagram" className="share-icon" /> Instagram
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+          {/* Tip Button */}
+          <a
+            href="https://buymeacoffee.com/filmseeker"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="tip-button"
+            aria-label="Send a tip to support FilmSeeker"
+          >
+            <img src={tipIcon} alt="Tip Icon" className="tip-icon" />
+          </a>
+
+          {/* Message Button */}
+          <button
+            onClick={openMessagePopup}
+            className="feedback-button"
+            aria-label="Send us a message"
+          >
+            Feedback
+          </button>
+
+          {/* Message Modal */}
+          {showMessagePopup && (
+            <div className="modal" onClick={closeMessagePopup}>
+              <div className="modal-content message-modal" onClick={(e) => e.stopPropagation()}>
+                <h2>Send us a Message</h2>
+                <textarea
+                  className="message-input"
+                  placeholder="Your message here..."
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                ></textarea>
+                <div className="modal-buttons">
+                  <button onClick={sendMessage} className="send-button">Send</button>
+                  <button onClick={closeMessagePopup} className="cancel-button">Cancel</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* About Us Modal */}
+          {showAboutUs && (
+            <div className="modal" onClick={closeAboutUs}>
+              <div className="modal-content thank-you-modal" onClick={(e) => e.stopPropagation()}>
+                <h2>THANK YOU</h2>
+                <p>Thank you for being here.</p>
+                <p>And most of all, thank you for being curious about films.</p>
+
+                <p>At FilmSeeker, our purpose is simple:<br/>
+                To help you find the next film you're going to watch.<br/>
+                And then come back for another.<br/>
+                And another.<br/>
+                And another.<br/>
+                We believe there's always another story waiting to be found.</p>
+
+                <p>We don't gather likes.<br/>
+                We don't make watch lists.<br/>
+                There are plenty of great apps out there for that.<br/>
+                We just want to help you find your next great film.<br/>
+                That's it.</p>
+
+                <p>And while you're here, we hope you'll feel encouraged to explore.<br/>
+                To experiment.<br/>
+                To discover films you might not have chosen otherwise.<br/>
+                Because sometimes, the most unexpected story can awaken something new inside you.<br/>
+                A film in a foreign language, made in a faraway place, can be surprisingly close to your own life experience.</p>
+
+                <p>We're always open to your suggestions, comments, feedback—even emojis.<br/>
+                Click the Message button and reach out any way you like.<br/>
+                We'd love to hear from you.</p>
+
+                <p>And if you enjoyed your film recommendation or found something special through us,<br/>
+                you can always leave us a tip by clicking the Tip button on the main page.<br/>
+                It helps us keep the project alive—and makes our day!</p>
+
+                <p>Thank you for taking the time to read this modest text.<br/>
+                And thank you on behalf of all the artists who will be discovered—or rediscovered—through you.</p>
+
+                <p><strong>Enjoy the Films.</strong></p>
+
+                <button className="close-button" onClick={closeAboutUs}>Close</button>
+              </div>
+            </div>
+          )}
+
+
+        </div>
+      ) : (
+        <Login />
+      )}
     </div>
   );
 }
