@@ -932,6 +932,127 @@ function App() {
                     </div>
                   </div>
                 ) : null}
+
+                {/* Add Your Preferences Section - Moved under DrFilmBot */}
+                <div className="preferences-section" style={{ marginTop: '30px' }}>
+                  <h3 className="subsection-title">Add Your Preferences</h3>
+                  <div className="input-container">
+                    <div className="input-group">
+                      <img src={iconGenre} alt="Genre Icon" />
+                      <label>Select a Genre!</label>
+                      <select value={genre} onChange={(e) => setGenre(e.target.value)}>
+                        <option value="">Choose a genre</option>
+                        {genres.map((g) => (
+                          <option key={g.id} value={g.id}>
+                            {g.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="input-group">
+                      <img src={iconLength} alt="Length Icon" />
+                      <label>Duration</label>
+                      <select value={duration} onChange={(e) => setDuration(e.target.value)}>
+                        <option value="">Choose a duration</option>
+                        <option value="short">Short (less than 90 min)</option>
+                        <option value="medium">Medium (90-120 min)</option>
+                        <option value="long">Long (more than 120 min)</option>
+                      </select>
+                    </div>
+                    <div className="input-group">
+                      <img src={iconMood} alt="Mood Icon" />
+                      <label>Decade</label>
+                      <select value={decade} onChange={(e) => setDecade(e.target.value)}>
+                        <option value="">Choose a decade</option>
+                        <option value="2020">2020s</option>
+                        <option value="2010">2010s</option>
+                        <option value="2000">2000s</option>
+                        <option value="1990">1990s</option>
+                        <option value="1980">1980s</option>
+                        <option value="1970">1970s</option>
+                        <option value="1960">1960s</option>
+                        <option value="1950">1950s</option>
+                        <option value="1940">1940s</option>
+                        <option value="1930">1930s</option>
+                        <option value="1920">1920s</option>
+                      </select>
+                    </div>
+                    <div className="input-group">
+                      <img src={iconLanguage} alt="Language Icon" />
+                      <label>Language</label>
+                      <select value={language} onChange={(e) => setLanguage(e.target.value)}>
+                        <option value="">Choose a language</option>
+                        <option value="english">English</option>
+                        <option value="french">French</option>
+                        <option value="spanish">Spanish</option>
+                        <option value="german">German</option>
+                        <option value="italian">Italian</option>
+                        <option value="japanese">Japanese</option>
+                        <option value="korean">Korean</option>
+                        <option value="chinese">Chinese</option>
+                        <option value="russian">Russian</option>
+                        <option value="portuguese">Portuguese</option>
+                        <option value="swedish">Swedish</option>
+                        <option value="danish">Danish</option>
+                        <option value="norwegian">Norwegian</option>
+                        <option value="dutch">Dutch</option>
+                        <option value="finnish">Finnish</option>
+                        <option value="polish">Polish</option>
+                        <option value="turkish">Turkish</option>
+                        <option value="arabic">Arabic</option>
+                        <option value="hindi">Hindi</option>
+                        <option value="thai">Thai</option>
+                        <option value="czech">Czech</option>
+                        <option value="hungarian">Hungarian</option>
+                        <option value="greek">Greek</option>
+                        <option value="romanian">Romanian</option>
+                        <option value="albanian">Albanian</option>
+                        <option value="slovenian">Slovenian</option>
+                        <option value="moldavian">Moldavian</option>
+                      </select>
+                    </div>
+                    <div className="input-group">
+                      <img src={iconActor} alt="Actor Icon" />
+                      <label>Actress/Actor</label>
+                      <input value={actor} onChange={(e) => setActor(e.target.value)} placeholder="Enter Actress/Actor" />
+                    </div>
+                    <div className="input-group">
+                      <img src={iconDirector} alt="Director Icon" />
+                      <label>Director</label>
+                      <input value={director} onChange={(e) => setDirector(e.target.value)} placeholder="Enter Director" />
+                    </div>
+                  </div>
+                  {/* Buttons */}
+                  <div className="button-group">
+                    <button onClick={getRecommendations} disabled={isLoading} className={isLoading ? 'button-disabled' : ''}>
+                      {isLoading ? 'Loading...' : 'GET MY FILM'}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Your Recommendations Section - Moved under DrFilmBot */}
+                <div className="recommendations-section" style={{ marginTop: '30px' }}>
+                  <h3 className="subsection-title">Your Recommendations</h3>
+                  <div className="recommendation">
+                    {isLoading ? (
+                      <div className="spinner"></div>
+                    ) : recommendations.length > 0 ? (
+                      recommendations.map((rec, index) => (
+                        <div key={index} className="recommendation-item">
+                          {rec.Poster ? (
+                            <img src={rec.Poster} alt={`Movie Poster ${index + 1}`} className="poster" onClick={() => fetchMovieDetails(rec.id)} />
+                          ) : (
+                            <p>{rec.Title}</p>
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      <p className="no-recommendations">
+                        No recommendations yet. Select your preferences and click "GET MY FILM!"
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -976,107 +1097,7 @@ function App() {
               </div>
             </div>
           </div>
-          {/* Preferences Form Section */}
-          <div className="section">
-            <div className="section-container section-alt">
-              <h2 className="section-title">Add Your Preferences</h2>
-              <div className="input-container">
-                <div className="input-group">
-                  <img src={iconGenre} alt="Genre Icon" />
-                  <label>Select a Genre!</label>
-                  <select value={genre} onChange={(e) => setGenre(e.target.value)}>
-                    <option value="">Choose a genre</option>
-                    {genres.map((g) => (
-                      <option key={g.id} value={g.name}>
-                        {g.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="input-group">
-                  <img src={iconMood} alt="Duration Icon" />
-                  <label>Film Duration</label>
-                  <select value={duration} onChange={(e) => setDuration(e.target.value)}>
-                    <option value="">Any duration</option>
-                    <option value="short">Short (&lt;90 min)</option>
-                    <option value="medium">Medium (90-120 min)</option>
-                    <option value="long">Long (&gt;120 min)</option>
-                  </select>
-                </div>
-                <div className="input-group">
-                  <img src={iconLength} alt="Decade Icon" />
-                  <label>Movie Decade</label>
-                  <select value={decade} onChange={(e) => setDecade(e.target.value)}>
-                    <option value="">Any decade</option>
-                    <option value="1950">1950s</option>
-                    <option value="1960">1960s</option>
-                    <option value="1970">1970s</option>
-                    <option value="1980">1980s</option>
-                    <option value="1990">1990s</option>
-                    <option value="2000">2000s</option>
-                    <option value="2010">2010s</option>
-                    <option value="2020">2020s</option>
-                  </select>
-                </div>
-                <div className="input-group">
-                  <img src={iconLanguage} alt="Language Icon" />
-                  <label>Preferred Language</label>
-                  <select value={language} onChange={(e) => setLanguage(e.target.value)}>
-                    <option value="">Any language</option>
-                    {Object.keys(languageMap)
-                      .filter((lang) => lang !== '')
-                      .sort()
-                      .map((lang) => (
-                        <option key={lang} value={lang}>
-                          {lang.charAt(0).toUpperCase() + lang.slice(1)}
-                        </option>
-                      ))}
-                  </select>
-                </div>
-                <div className="input-group">
-                  <img src={iconActor} alt="Actor Icon" />
-                  <label>Actress/Actor</label>
-                  <input value={actor} onChange={(e) => setActor(e.target.value)} placeholder="Enter Actress/Actor" />
-                </div>
-                <div className="input-group">
-                  <img src={iconDirector} alt="Director Icon" />
-                  <label>Director</label>
-                  <input value={director} onChange={(e) => setDirector(e.target.value)} placeholder="Enter Director" />
-                </div>
-              </div>
-              {/* Buttons */}
-              <div className="button-group">
-                <button onClick={getRecommendations} disabled={isLoading} className={isLoading ? 'button-disabled' : ''}>
-                  {isLoading ? 'Loading...' : 'GET MY FILM'}
-                </button>
-              </div>
-            </div>
-          </div>
-          {/* Recommendations Section */}
-          <div className="section">
-            <div className="section-container">
-              <h2 className="section-title">Your Recommendations</h2>
-              <div className="recommendation">
-                {isLoading ? (
-                  <div className="spinner"></div>
-                ) : recommendations.length > 0 ? (
-                  recommendations.map((rec, index) => (
-                    <div key={index} className="recommendation-item">
-                      {rec.Poster ? (
-                        <img src={rec.Poster} alt={`Movie Poster ${index + 1}`} className="poster" onClick={() => fetchMovieDetails(rec.id)} />
-                      ) : (
-                        <p>{rec.Title}</p>
-                      )}
-                    </div>
-                  ))
-                ) : (
-                  <p className="no-recommendations">
-                    No recommendations yet. Select your preferences and click "GET MY FILM!"
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
+
 
           {/* Surprise Me Section */}
           <div className="section">

@@ -2485,6 +2485,29 @@ button:hover,
   border-radius: 3px;
 }
 
+.subsection-title {
+  font-size: 1.8em;
+  color: #FFFFFF;
+  margin-bottom: 20px;
+  text-align: center;
+  position: relative;
+  display: inline-block;
+  padding: 0 15px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.subsection-title::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 2px;
+  background: #25FDE9;
+  border-radius: 2px;
+}
+
 .section-container {
   background: rgba(20, 30, 60, 0.3);
   border-radius: 15px;
