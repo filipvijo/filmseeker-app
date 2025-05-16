@@ -970,7 +970,20 @@ function App() {
       );
       console.log('Suggestions with posters:', suggestionsWithPosters);
 
-      setDrFilmBotSuggestions(suggestionsWithPosters.slice(0, 7));
+      // Filter out already watched films
+      const unwatchedSuggestions = suggestionsWithPosters.filter(
+        suggestion => suggestion.id && !checkIfWatched(suggestion.id)
+      );
+
+      console.log('Filtered unwatched suggestions:', unwatchedSuggestions);
+
+      // If we have enough unwatched suggestions, use those
+      // Otherwise, fall back to all suggestions (this prevents showing no results)
+      if (unwatchedSuggestions.length >= 3) {
+        setDrFilmBotSuggestions(unwatchedSuggestions.slice(0, 7));
+      } else {
+        setDrFilmBotSuggestions(suggestionsWithPosters.slice(0, 7));
+      }
     } catch (error) {
       console.error('Error in askDrFilmBot:', error.message);
       if (error.response) {
