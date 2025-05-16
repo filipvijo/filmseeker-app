@@ -905,6 +905,19 @@ function App() {
     setIsDrFilmBotLoading(true);
     setDrFilmBotSuggestions([]);
     try {
+      // Get the list of watched films to explicitly tell GPT about them
+      const watchedFilmsList = watchedFilms.map(film => film.title || '').filter(title => title);
+
+      // Create a prompt that includes the watched films
+      let enhancedPrompt = userPrompt;
+
+      if (watchedFilmsList.length > 0) {
+        enhancedPrompt += `\n\nPlease DO NOT recommend any of these films that I've already watched: ${watchedFilmsList.join(', ')}.`;
+        enhancedPrompt += `\nInstead, recommend diverse films from different eras, countries, and styles that match my request.`;
+      }
+
+      console.log('Enhanced prompt with watched films:', enhancedPrompt);
+
       const response = await axios.post(
         'https://api.openai.com/v1/chat/completions',
         {
@@ -915,10 +928,10 @@ function App() {
               content:
                 'You are a friendly and knowledgeable movie expert named Dr FilmBot who provides personalized film recommendations. When asked for a recommendation, suggest exactly seven movies that match the user’s mood or preferences. For each movie, provide the title, year, a short description, and one memorable quote to spark interest. Format your response as a list: 1. Movie Title (Year) - Short Description - "Memorable Quote". 2. Movie Title (Year) - Short Description - "Memorable Quote". 3. Movie Title (Year) - Short Description - "Memorable Quote". 4. Movie Title (Year) - Short Description - "Memorable Quote". 5. Movie Title (Year) - Short Description - "Memorable Quote". 6. Movie Title (Year) - Short Description - "Memorable Quote". 7. Movie Title (Year) - Short Description - "Memorable Quote".',
             },
-            { role: 'user', content: userPrompt },
+            { role: 'user', content: enhancedPrompt },
           ],
-          max_tokens: 500,
-          temperature: 0.8,
+          max_tokens: 800,
+          temperature: 0.9,
         },
         {
           headers: {
@@ -970,19 +983,37 @@ function App() {
       );
       console.log('Suggestions with posters:', suggestionsWithPosters);
 
-      // Filter out already watched films
+      // Double-check to filter out any watched films that might have slipped through
       const unwatchedSuggestions = suggestionsWithPosters.filter(
-        suggestion => suggestion.id && !checkIfWatched(suggestion.id)
+        suggestion => suggestion.id && !watchedFilmIds.has(suggestion.id.toString())
       );
 
       console.log('Filtered unwatched suggestions:', unwatchedSuggestions);
 
       // If we have enough unwatched suggestions, use those
-      // Otherwise, fall back to all suggestions (this prevents showing no results)
+      // Otherwise, request more recommendations
       if (unwatchedSuggestions.length >= 3) {
         setDrFilmBotSuggestions(unwatchedSuggestions.slice(0, 7));
+      } else if (suggestionsWithPosters.length > 0) {
+        // If we have some suggestions but most are watched, still show them
+        // but add a message encouraging the user to ask for more diverse recommendations
+        const remainingSuggestions = suggestionsWithPosters.slice(0, 7);
+        setDrFilmBotSuggestions([
+          ...remainingSuggestions,
+          {
+            title: "Need more recommendations?",
+            description: "You've watched many of these films! Try asking for more specific or diverse recommendations.",
+            quote: "Try something like 'Show me sci-fi films from the 90s' or 'Recommend me foreign films'",
+            id: null
+          }
+        ]);
       } else {
-        setDrFilmBotSuggestions(suggestionsWithPosters.slice(0, 7));
+        setDrFilmBotSuggestions([{
+          title: "No recommendations found",
+          description: "Try asking for a different type of film or being more specific in your request.",
+          quote: "",
+          id: null
+        }]);
       }
     } catch (error) {
       console.error('Error in askDrFilmBot:', error.message);
