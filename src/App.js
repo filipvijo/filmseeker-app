@@ -17,9 +17,11 @@ import instagramIcon from './instagram-icon.png';
 import tipIcon from './tip-icon.png';
 import drFilmBotIllustration from './dr-filmbot-illustration.png'; // Import your illustration
 import FilmOfMonth from './components/FilmOfMonth';
+import WatchedFilmsPage from './components/WatchedFilmsPage';
 import { auth } from './firebase';
 import Login from './Login';
 import { onAuthStateChanged } from 'firebase/auth';
+import { addWatchedFilm, isFilmWatched, getWatchedFilms } from './firebase/watchedFilms';
 
 // Helper function to convert a string to a URL-friendly slug
 // eslint-disable-next-line no-unused-vars
@@ -121,6 +123,10 @@ function App() {
   const [drFilmBotUserInput, setDrFilmBotUserInput] = useState('');
   const [drFilmBotSuggestions, setDrFilmBotSuggestions] = useState([]);
   const [isDrFilmBotLoading, setIsDrFilmBotLoading] = useState(false);
+  const [watchedFilms, setWatchedFilms] = useState([]);
+  const [watchedFilmIds, setWatchedFilmIds] = useState(new Set());
+  const [showWatchedFilms, setShowWatchedFilms] = useState(false);
+  const [isMarkingWatched, setIsMarkingWatched] = useState(false);
 
   const [message, setMessage] = useState('');
 
@@ -309,6 +315,15 @@ function App() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
+
+      // If user is authenticated, fetch their watched films
+      if (currentUser) {
+        fetchUserWatchedFilms(currentUser.uid);
+      } else {
+        // Reset watched films if user logs out
+        setWatchedFilms([]);
+        setWatchedFilmIds(new Set());
+      }
     });
     return () => unsubscribe();
   }, []);
@@ -319,6 +334,126 @@ function App() {
       console.log('Streaming Services:', movieOfTheMonthDetails.streamingServices);
     }
   }, [movieOfTheMonthDetails]);
+
+  // Fetch user's watched films
+  const fetchUserWatchedFilms = async (userId) => {
+    try {
+      let films = [];
+      let filmIds = new Set();
+
+      // Try to get films from Firebase
+      try {
+        films = await getWatchedFilms(userId);
+        filmIds = new Set(films.map(film => film.filmId));
+      } catch (firebaseError) {
+        console.error('Error fetching watched films from Firebase:', firebaseError);
+
+        // If Firebase fails, get films from localStorage
+        const localWatchedFilms = localStorage.getItem('watchedFilms');
+        if (localWatchedFilms) {
+          const parsedFilms = JSON.parse(localWatchedFilms);
+          films = parsedFilms.map(film => ({
+            id: film.id,
+            filmId: film.id,
+            title: film.title,
+            posterPath: film.poster,
+            addedAt: new Date(film.addedAt)
+          }));
+
+          filmIds = new Set(parsedFilms.map(film => film.id.toString()));
+        }
+      }
+
+      setWatchedFilms(films);
+      setWatchedFilmIds(filmIds);
+    } catch (error) {
+      console.error('Error fetching watched films:', error);
+      // If there's a Firebase permission error, we'll just continue with the current state
+      // This allows the app to function even if Firebase permissions are not set up correctly
+    }
+  };
+
+  // Mark a film as watched
+  const markFilmAsWatched = async (film, event) => {
+    if (!user) {
+      alert('Please sign in to mark films as watched');
+      return;
+    }
+
+    // Add animation class to the button
+    if (event && event.currentTarget) {
+      event.currentTarget.classList.add('watched-button-clicked');
+
+      // Remove the animation class after the animation completes
+      setTimeout(() => {
+        if (event.currentTarget) {
+          event.currentTarget.classList.remove('watched-button-clicked');
+        }
+      }, 1000); // Increased from 500ms to 1000ms for better visibility
+    }
+
+    try {
+      setIsMarkingWatched(true);
+
+      try {
+        // Add film to watched list in Firestore
+        await addWatchedFilm(user.uid, film);
+
+        // Update local state
+        await fetchUserWatchedFilms(user.uid);
+      } catch (firebaseError) {
+        console.error('Firebase error:', firebaseError);
+
+        // If there's a Firebase permission error, we'll handle it locally
+        // Add the film ID to the local watchedFilmIds set
+        setWatchedFilmIds(prev => {
+          const newSet = new Set(prev);
+          newSet.add(film.id.toString());
+          return newSet;
+        });
+
+        // Also store in localStorage as a fallback
+        const localWatchedFilms = localStorage.getItem('watchedFilms');
+        let watchedFilmsArray = [];
+
+        if (localWatchedFilms) {
+          watchedFilmsArray = JSON.parse(localWatchedFilms);
+        }
+
+        // Check if film is already in the array
+        if (!watchedFilmsArray.some(watchedFilm => watchedFilm.id === film.id)) {
+          watchedFilmsArray.push({
+            id: film.id,
+            title: film.title,
+            poster: film.poster,
+            addedAt: new Date().toISOString()
+          });
+
+          localStorage.setItem('watchedFilms', JSON.stringify(watchedFilmsArray));
+        }
+      }
+
+      // Remove the film from DrFilmBot suggestions
+      setDrFilmBotSuggestions(prevSuggestions =>
+        prevSuggestions.filter(suggestion => suggestion.id !== film.id)
+      );
+
+      setIsMarkingWatched(false);
+    } catch (error) {
+      console.error('Error marking film as watched:', error);
+      setIsMarkingWatched(false);
+    }
+  };
+
+  // Check if a film is in the user's watched list
+  const checkIfWatched = (filmId) => {
+    return watchedFilmIds.has(filmId.toString());
+  };
+
+  // Toggle watched films page
+  const toggleWatchedFilmsPage = () => {
+    setShowWatchedFilms(!showWatchedFilms);
+  };
 
   // getRecommendations (Updated for 16 suggestions with original language logic)
   const getRecommendations = async () => {
@@ -899,36 +1034,64 @@ function App() {
                   <div className="dr-filmbot-response">
                     <h3>Movie Prescription:</h3>
                     <div className="recommendation">
-                      {drFilmBotSuggestions.map((suggestion, index) => (
-                        <div key={index} className="recommendation-item">
-                          {suggestion.poster ? (
-                            <img
-                              src={suggestion.poster}
-                              alt={`${suggestion.title} Poster`}
-                              className="poster"
-                              onClick={() => suggestion.id && fetchMovieDetails(suggestion.id)}
-                              onError={(e) => {
-                                console.log(`Failed to load poster for ${suggestion.title}:`, suggestion.poster);
-                                e.target.style.display = 'none';
-                                // Create and show placeholder
-                                const placeholder = document.createElement('div');
-                                placeholder.className = 'poster-placeholder';
-                                placeholder.textContent = suggestion.title;
-                                e.target.parentNode.appendChild(placeholder);
-                              }}
-                            />
-                          ) : (
-                            <div className="poster-placeholder">
-                              {suggestion.title}
-                            </div>
-                          )}
-                          <p>{suggestion.title}{suggestion.year ? ` (${suggestion.year})` : ''}</p>
-                          <p>{suggestion.description}</p>
-                          {suggestion.quote && (
-                            <p className="movie-quote">"{suggestion.quote}"</p>
-                          )}
+                      {drFilmBotSuggestions
+                        .filter(suggestion => suggestion.id && !checkIfWatched(suggestion.id))
+                        .map((suggestion, index) => (
+                          <div key={`${suggestion.id}-${index}`} className="recommendation-item">
+                            {suggestion.poster ? (
+                              <img
+                                src={suggestion.poster}
+                                alt={`${suggestion.title} Poster`}
+                                className="poster"
+                                onClick={() => suggestion.id && fetchMovieDetails(suggestion.id)}
+                                onError={(e) => {
+                                  console.log(`Failed to load poster for ${suggestion.title}:`, suggestion.poster);
+                                  e.target.style.display = 'none';
+                                  // Create and show placeholder
+                                  const placeholder = document.createElement('div');
+                                  placeholder.className = 'poster-placeholder';
+                                  placeholder.textContent = suggestion.title;
+                                  e.target.parentNode.appendChild(placeholder);
+                                }}
+                              />
+                            ) : (
+                              <div className="poster-placeholder">
+                                {suggestion.title}
+                              </div>
+                            )}
+                            <p>{suggestion.title}{suggestion.year ? ` (${suggestion.year})` : ''}</p>
+
+                            {/* Watched button - placed under the title */}
+                            {suggestion.id && (
+                              <button
+                                className={`watched-button ${isMarkingWatched ? 'is-loading' : ''}`}
+                                onClick={(e) => {
+                                  e.stopPropagation(); // Prevent opening the movie details
+                                  markFilmAsWatched({
+                                    id: suggestion.id,
+                                    title: suggestion.title,
+                                    poster: suggestion.poster
+                                  }, e);
+                                }}
+                                disabled={isMarkingWatched}
+                                title="Mark as watched"
+                              >
+                                Already watched it
+                              </button>
+                            )}
+
+                            <p>{suggestion.description}</p>
+                            {suggestion.quote && (
+                              <p className="movie-quote">"{suggestion.quote}"</p>
+                            )}
+                          </div>
+                        ))}
+                      {drFilmBotSuggestions.length > 0 &&
+                       drFilmBotSuggestions.filter(suggestion => suggestion.id && !checkIfWatched(suggestion.id)).length === 0 && (
+                        <div className="no-recommendations">
+                          <p>You've watched all the recommended films! Try asking for more recommendations.</p>
                         </div>
-                      ))}
+                      )}
                     </div>
                   </div>
                 ) : null}
@@ -1256,6 +1419,15 @@ function App() {
               </div>
             </div>
           )}
+          {/* Watched Films Button */}
+          <button
+            onClick={toggleWatchedFilmsPage}
+            className="watched-films-button"
+            aria-label="View your watched films"
+          >
+            Watched Films
+          </button>
+
           {/* Tip Button */}
           <a
             href="https://buymeacoffee.com/filmseeker"
@@ -1293,6 +1465,15 @@ function App() {
                 </div>
               </div>
             </div>
+          )}
+
+          {/* Watched Films Page */}
+          {showWatchedFilms && (
+            <WatchedFilmsPage
+              user={user}
+              onClose={toggleWatchedFilmsPage}
+              fetchMovieDetails={fetchMovieDetails}
+            />
           )}
 
           {/* About Us Modal */}

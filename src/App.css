@@ -234,18 +234,76 @@ button:hover,
   cursor: pointer;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   box-shadow: none; /* Add this line to remove the shadow */
+  position: relative; /* For positioning the watched button */
 }
 
 /* Zoom effect for Get My Film and Surprise Me recommendations */
 .recommendation-item:hover {
-
   box-shadow: none;
 }
 
-
-
 .dr-filmbot-response .recommendation-item:hover .poster {
   transform: scale(1.05); /* Apply zoom only to posters */
+}
+
+/* Watched button styles */
+.watched-button {
+  position: relative;
+  margin: 5px auto 10px auto;
+  background: rgba(37, 253, 233, 0.9);
+  color: #1f2937;
+  border: none;
+  border-radius: 20px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  font-size: 12px;
+  font-weight: bold;
+  opacity: 0.9;
+  white-space: nowrap;
+  width: fit-content;
+}
+
+.watched-button:hover {
+  transform: scale(1.05);
+  opacity: 1;
+  background: rgba(37, 253, 233, 1);
+}
+
+.watched-button.is-watched {
+  background: #25FDE9;
+  opacity: 1;
+}
+
+/* Animation for the watched button when clicked */
+@keyframes watchedButtonAnimation {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(37, 253, 233, 0.7); }
+  50% { transform: scale(1.2); background-color: #25FDE9; box-shadow: 0 0 0 10px rgba(37, 253, 233, 0.4); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(37, 253, 233, 0); }
+}
+
+.watched-button-clicked {
+  animation: watchedButtonAnimation 0.5s ease forwards !important;
+}
+
+/* Watched badge */
+.watched-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(37, 253, 233, 0.9);
+  color: #1f2937;
+  border-radius: 12px;
+  padding: 3px 8px;
+  font-size: 12px;
+  font-weight: bold;
+  z-index: 10;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
 }
 
 /* Generic poster for movies */
@@ -498,10 +556,131 @@ button:hover,
   width: 90%;
   max-width: 500px;
   max-height: 70vh;
-  overflow-y: auto;
-  color: #e0e7ff;
+}
+
+/* Watched Films Modal */
+.watched-films-modal {
+  background: linear-gradient(135deg, rgba(25, 35, 70, 0.9), rgba(40, 50, 90, 0.9));
+  padding: 30px;
+  border-radius: 20px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 80vh;
+}
+
+.watched-films-title {
+  font-size: 2.2em;
+  margin-bottom: 25px;
+  color: #ffffff;
+  text-align: center;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.watched-films-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 25px;
+  margin-top: 20px;
+}
+
+.watched-film-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(30, 40, 70, 0.4);
+  border-radius: 12px;
+  padding: 15px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
+}
+
+.watched-film-item:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
+}
+
+.watched-film-poster {
+  width: 150px;
+  height: auto;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.watched-film-poster:hover {
+  transform: scale(1.05);
+}
+
+.watched-film-poster-placeholder {
+  width: 150px;
+  height: 225px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(20, 30, 60, 0.6);
+  border-radius: 8px;
+  color: #ffffff;
+  font-size: 14px;
+  text-align: center;
+  padding: 10px;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+
+.watched-film-details {
+  width: 100%;
   text-align: center;
 }
+
+.watched-film-title {
+  font-size: 1em;
+  margin: 5px 0;
+  color: #ffffff;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.watched-date {
+  font-size: 0.8em;
+  color: #a0aec0;
+  margin: 5px 0;
+}
+
+.remove-watched-button {
+  background: rgba(220, 38, 38, 0.8);
+  color: white;
+  border: none;
+  border-radius: 15px;
+  padding: 5px 10px;
+  font-size: 0.8em;
+  margin-top: 8px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.remove-watched-button:hover {
+  background: rgba(220, 38, 38, 1);
+}
+
+.no-watched-films, .no-recommendations {
+  text-align: center;
+  color: #a0aec0;
+  margin: 30px 0;
+  font-size: 1.1em;
+  line-height: 1.6;
+  padding: 20px;
+  background: rgba(30, 40, 70, 0.4);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 500px;
+}
+
 
 .message-input {
   width: 90%;
@@ -2554,5 +2733,82 @@ button:hover,
   .section-container {
     padding: 15px;
     width: 95%;
+  }
+}/* Additional styles for the Watched Films feature */
+
+.feedback-button {
+  position: fixed;
+  bottom: 20px;
+  right: 85px;
+  background: rgba(37, 253, 233, 0.9);
+  color: #1f2937;
+  border: none;
+  border-radius: 30px;
+  padding: 10px 20px;
+  font-size: 1em;
+  cursor: pointer;
+  z-index: 100;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+.feedback-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+  background: rgba(37, 253, 233, 1);
+}
+
+.watched-films-button {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: rgba(37, 253, 233, 0.9);
+  color: #1f2937;
+  border: none;
+  border-radius: 30px;
+  padding: 10px 20px;
+  font-size: 1em;
+  cursor: pointer;
+  z-index: 100;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+.watched-films-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+  background: rgba(37, 253, 233, 1);
+}
+
+/* Media queries for the watched films button */
+@media (max-width: 768px) {
+  .watched-films-button {
+    top: 15px;
+    right: 15px;
+    padding: 8px 16px;
+    font-size: 0.9em;
+  }
+
+  .feedback-button {
+    bottom: 15px;
+    right: 75px;
+    padding: 8px 16px;
+    font-size: 0.9em;
+  }
+}
+
+@media (max-width: 480px) {
+  .watched-films-button {
+    top: 15px;
+    right: 15px;
+    padding: 6px 12px;
+    font-size: 0.8em;
+  }
+
+  .feedback-button {
+    bottom: 15px;
+    right: 70px;
+    padding: 6px 12px;
+    font-size: 0.8em;
   }
 }
