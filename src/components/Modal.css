@@ -1,0 +1,164 @@
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: var(--z-index-modal-backdrop);
+  padding: var(--space-md);
+  animation: fadeIn 0.3s ease-out;
+  backdrop-filter: blur(3px);
+}
+
+.modal {
+  background: var(--modal-bg);
+  backdrop-filter: blur(20px);
+  border-radius: var(--radius-lg);
+  border: var(--modal-border);
+  box-shadow: var(--shadow-xl);
+  position: relative;
+  max-height: 85vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  z-index: var(--z-index-modal);
+  animation: slideUp 0.4s ease-out;
+}
+
+/* Size variants */
+.modal--small {
+  width: 90%;
+  max-width: 450px;
+}
+
+.modal--medium {
+  width: 90%;
+  max-width: 650px;
+}
+
+.modal--large {
+  width: 90%;
+  max-width: 850px;
+}
+
+.modal--full {
+  width: 95%;
+  max-width: 1200px;
+}
+
+/* Variant styles */
+.modal--primary {
+  background: linear-gradient(135deg, rgba(25, 35, 70, 0.92), rgba(40, 50, 90, 0.92));
+  border: 2px solid rgba(37, 253, 233, 0.2);
+}
+
+.modal--secondary {
+  background: linear-gradient(145deg, rgba(30, 30, 45, 0.95), rgba(20, 20, 35, 0.95));
+  border: 2px solid rgba(212, 175, 55, 0.35);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(212, 175, 55, 0.25);
+}
+
+.modal--dark {
+  background: linear-gradient(135deg, rgba(15, 22, 53, 0.95), rgba(25, 32, 63, 0.95));
+  border: 2px solid rgba(37, 253, 233, 0.1);
+}
+
+.modal-content {
+  padding: var(--space-xl);
+  color: var(--color-text-primary);
+}
+
+.modal-close-button {
+  position: absolute;
+  top: var(--space-sm);
+  right: var(--space-sm);
+  background: transparent;
+  border: none;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-2xl);
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all var(--transition-normal);
+  z-index: 1;
+}
+
+.modal-close-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: rotate(90deg);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Scrollbar styling for modal */
+.modal::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modal::-webkit-scrollbar-track {
+  background: rgba(30, 40, 70, 0.1);
+}
+
+.modal::-webkit-scrollbar-thumb {
+  background: rgba(37, 253, 233, 0.2);
+  border-radius: var(--radius-round);
+}
+
+.modal::-webkit-scrollbar-thumb:hover {
+  background: rgba(37, 253, 233, 0.4);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .modal-content {
+    padding: var(--space-lg);
+  }
+  
+  .modal--small {
+    max-width: 400px;
+  }
+  
+  .modal--medium {
+    max-width: 550px;
+  }
+  
+  .modal--large {
+    max-width: 700px;
+  }
+}
+
+@media (max-width: 480px) {
+  .modal-content {
+    padding: var(--space-md);
+  }
+  
+  .modal-overlay {
+    padding: var(--space-sm);
+  }
+  
+  .modal {
+    max-height: 80vh;
+  }
+}

@@ -1,0 +1,79 @@
+/* ActionButtons.css */
+/* Styles for the fixed action buttons in the app */
+
+.watched-films-button-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 2000; /* Very high z-index to ensure it's above everything */
+  cursor: pointer; /* Add cursor pointer to indicate it's clickable */
+}
+
+/* Make sure the button inside the container is also clickable */
+.watched-films-button-container button {
+  cursor: pointer;
+  pointer-events: auto; /* Ensure click events are captured */
+}
+
+.feedback-button-container {
+  position: fixed;
+  bottom: 20px;
+  right: 85px; /* Positioned next to the "buy me a coffee" button */
+  z-index: 2000; /* Very high z-index to ensure it's above everything */
+  cursor: pointer; /* Add cursor pointer to indicate it's clickable */
+}
+
+/* Make sure the button inside the container is also clickable */
+.feedback-button-container button {
+  cursor: pointer;
+  pointer-events: auto; /* Ensure click events are captured */
+}
+
+.tip-button-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 2000; /* Very high z-index to ensure it's above everything */
+  cursor: pointer; /* Add cursor pointer to indicate it's clickable */
+}
+
+/* Make sure the link inside the container is also clickable */
+.tip-button-container a {
+  cursor: pointer;
+  pointer-events: auto; /* Ensure click events are captured */
+}
+
+/* Media queries for responsive design */
+@media (max-width: 768px) {
+  .watched-films-button-container {
+    top: 15px;
+    right: 15px;
+  }
+
+  .feedback-button-container {
+    bottom: 15px;
+    right: 75px;
+  }
+
+  .tip-button-container {
+    bottom: 15px;
+    right: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .watched-films-button-container {
+    top: 10px;
+    right: 10px;
+  }
+
+  .feedback-button-container {
+    bottom: 10px;
+    right: 70px;
+  }
+
+  .tip-button-container {
+    bottom: 10px;
+    right: 10px;
+  }
+}

@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import './index.css';               // If you have global CSS
+import './variables.css';           // Design system variables
+import './index.css';               // Global CSS
 import App from './App';
 import FilmDetail from './FilmDetail'; // Import your new component
 import reportWebVitals from './reportWebVitals';
@@ -17,7 +18,7 @@ root.render(
       <Routes>
         {/* 3) The homepage at path="/" loads your App component */}
         <Route path="/" element={<App />} />
-        
+
         {/* 4) The film detail page at path="/movie/:id" loads your FilmDetail component */}
         <Route path="/movie/:id" element={<FilmDetail />} />
       </Routes>

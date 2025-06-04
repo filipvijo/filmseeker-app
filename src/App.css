@@ -15,8 +15,7 @@
 
 .App {
   text-align: center;
-  padding: 50px;
-  font-family: 'Montserrat', sans-serif;
+  padding: var(--space-xl);
   background-image: url('./tech-background.png');
   background-size: cover;
   background-position: center;
@@ -26,7 +25,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  color: #ffffff;
+  color: var(--color-text-primary);
   position: relative;
   overflow-x: hidden;
 }
@@ -38,7 +37,7 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(to bottom, rgba(20, 40, 80, 0.7), rgba(50, 60, 90, 0.7));
+  background: var(--bg-gradient);
   z-index: 1;
 }
 
@@ -50,9 +49,9 @@
 .logo {
   width: 287.5px; /* 15% bigger (250px * 1.15) */
   height: auto;
-  margin-bottom: 20px;
+  margin-bottom: var(--space-md);
   filter: drop-shadow(0 0 15px rgba(147, 197, 253, 0.8));
-  transition: transform 0.3s ease;
+  transition: transform var(--transition-normal);
 }
 
 .logo:hover {
@@ -143,35 +142,7 @@ input:focus, select:focus {
   outline: none;
 }
 
-/* Button Styles */
-button,
-.trailer-button,
-.send-button,
-.surprise-button,
-.watch-now-button,
-.dr-filmbot-button {
-  padding: 12px 30px;
-  font-size: 1.3em;
-  background: #25FDE9;
-  color: #1f2937;
-  border: none;
-  border-radius: 25px;
-  cursor: pointer;
-  transition: all 0.4s ease;
-  outline: none;
-  box-shadow: 0 4px 15px rgba(37, 253, 233, 0.4);
-}
-
-button:hover,
-.trailer-button:hover,
-.send-button:hover,
-.surprise-button:hover,
-.watch-now-button:hover,
-.dr-filmbot-button:hover {
-  background: #25FDE9;
-  transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(37, 253, 233, 0.6);
-}
+/* Button Styles - now handled by the Button component */
 
 .trailer-button,
 .watch-now-button {
@@ -323,20 +294,7 @@ button:hover,
 }
 
 /* Trending Posters */
-.trending-poster {
-  width: 190px; /* Increased from 165px */
-  height: auto;
-  border-radius: 12px; /* Increased from 8px */
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3); /* Enhanced shadow */
-  margin: 0;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  border: 2px solid rgba(37, 253, 233, 0.1); /* Subtle border */
-}
-
-.trending-poster:hover {
-  transform: scale(1.05);
-  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.4), 0 0 10px rgba(37, 253, 233, 0.3);
-}
+/* Trending posters now use the MoviePoster component */
 
 /* Ensure the container for trending posters is a row */
 .trending-recommendation .poster-container {
@@ -347,37 +305,7 @@ button:hover,
   gap: 20px;
 }
 
-.modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.8);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  padding: 10px;
-  animation: fadeIn 0.5s ease-out;
-}
-
-.modal-content {
-  background: linear-gradient(135deg, rgba(25, 35, 70, 0.92), rgba(40, 50, 90, 0.92));
-  backdrop-filter: blur(20px); /* Increased blur for more depth */
-  padding: 40px;
-  border-radius: 24px; /* Slightly increased */
-  width: 90%;
-  max-width: 650px; /* Increased from 550px */
-  max-height: 85vh;
-  overflow-y: auto;
-  overflow-x: hidden; /* Prevent horizontal scrolling */
-  color: #e0e7ff;
-  position: relative;
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6), 0 0 20px rgba(37, 253, 233, 0.15); /* Enhanced shadow with subtle glow */
-  border: 2px solid rgba(163, 191, 250, 0.2); /* More subtle border */
-  animation: slideIn 0.7s ease-out;
-}
+/* Modals are now handled by the Modal component */
 
 .movie-of-the-month-modal {
   background: rgba(20, 20, 30, 0.95);
@@ -560,12 +488,9 @@ button:hover,
 
 /* Watched Films Modal */
 .watched-films-modal {
-  background: linear-gradient(135deg, rgba(25, 35, 70, 0.9), rgba(40, 50, 90, 0.9));
-  padding: 30px;
-  border-radius: 20px;
-  width: 90%;
   max-width: 800px;
   max-height: 80vh;
+  overflow-y: auto;
 }
 
 .watched-films-title {
@@ -1342,56 +1267,15 @@ button:hover,
   font-size: 1.1em;
 }
 
-/* Tip Button Styles */
-.tip-button {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background-color: #25FDE9;
-  border-radius: 50%;
-  padding: 12px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-  transition: all 0.3s ease;
-  z-index: 1000;
-  animation: pulse 2s infinite;
-}
-
-.tip-button:hover {
-  background-color: #25FDE9;
-  transform: scale(1.1);
-}
-
+/* Tip Button Icon Styles */
 .tip-icon {
   width: 30px;
   height: 30px;
   display: block;
+  animation: pulse 2s infinite;
 }
 
-/* Feedback Button Styles */
-.feedback-button {
-  position: fixed;
-  bottom: 20px;
-  right: 80px;
-  background: linear-gradient(45deg, #4c51bf, #6366f1);
-  color: white;
-  border-radius: 25px;
-  padding: 10px 20px;
-  font-size: 1em;
-  font-weight: 600;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-  transition: all 0.3s ease;
-  z-index: 1000;
-  border: none;
-  cursor: pointer;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.feedback-button:hover {
-  background: linear-gradient(45deg, #4338ca, #5155e5);
-  transform: translateY(-3px);
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
-}
+/* Button styles are now defined in ActionButtons.css */
 
 /* Film Of The Month Button Styles */
 .film-of-the-month-button-container {
@@ -1755,20 +1639,9 @@ button:hover,
 
 /* Tablet Adjustments (max-width: 768px) */
 @media (max-width: 768px) {
-  .tip-button {
-    bottom: 15px;
-    right: 15px;
-    padding: 10px;
-  }
   .tip-icon {
     width: 28px;
     height: 28px;
-  }
-  .feedback-button {
-    bottom: 15px;
-    right: 65px;
-    padding: 8px 16px;
-    font-size: 0.9em;
   }
   .logo {
     width: 138.75px;
@@ -1926,7 +1799,7 @@ button:hover,
   }
   .feedback-button {
     bottom: 15px;
-    right: 60px;
+    right: 70px;
     padding: 6px 12px;
     font-size: 0.8em;
   }
@@ -2688,18 +2561,23 @@ button:hover,
 }
 
 .section-container {
-  background: rgba(20, 30, 60, 0.3);
-  border-radius: 15px;
-  padding: 30px;
-  margin: 20px auto;
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  margin: var(--space-lg) auto;
   width: 90%;
-  max-width: 1200px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(37, 253, 233, 0.1);
+  max-width: var(--container-xl);
+  box-shadow: var(--shadow-md);
+  border: var(--card-border);
 }
 
 .section-alt {
   background: rgba(30, 40, 70, 0.3);
+}
+
+/* Reduced vertical spacing between sections */
+.section-container + .section-container {
+  margin-top: var(--space-md);
 }
 
 @media (max-width: 768px) {
@@ -2734,30 +2612,7 @@ button:hover,
     padding: 15px;
     width: 95%;
   }
-}/* Additional styles for the Watched Films feature */
-
-.feedback-button {
-  position: fixed;
-  bottom: 20px;
-  right: 85px;
-  background: rgba(37, 253, 233, 0.9);
-  color: #1f2937;
-  border: none;
-  border-radius: 30px;
-  padding: 10px 20px;
-  font-size: 1em;
-  cursor: pointer;
-  z-index: 100;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-  transition: all 0.3s ease;
-}
-
-.feedback-button:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
-  background: rgba(37, 253, 233, 1);
-}
-
+}/* Watched Films Button Styles */
 .watched-films-button {
   position: fixed;
   top: 20px;
@@ -2769,7 +2624,7 @@ button:hover,
   padding: 10px 20px;
   font-size: 1em;
   cursor: pointer;
-  z-index: 100;
+  z-index: 2000; /* Very high z-index to ensure it's above everything */
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
   transition: all 0.3s ease;
 }
@@ -2788,26 +2643,12 @@ button:hover,
     padding: 8px 16px;
     font-size: 0.9em;
   }
-
-  .feedback-button {
-    bottom: 15px;
-    right: 75px;
-    padding: 8px 16px;
-    font-size: 0.9em;
-  }
 }
 
 @media (max-width: 480px) {
   .watched-films-button {
     top: 15px;
     right: 15px;
-    padding: 6px 12px;
-    font-size: 0.8em;
-  }
-
-  .feedback-button {
-    bottom: 15px;
-    right: 70px;
     padding: 6px 12px;
     font-size: 0.8em;
   }

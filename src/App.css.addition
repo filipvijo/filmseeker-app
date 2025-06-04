@@ -1,0 +1,64 @@
+/* Additional styles for the Watched Films feature */
+
+.feedback-button {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: rgba(37, 253, 233, 0.9);
+  color: #1f2937;
+  border: none;
+  border-radius: 30px;
+  padding: 10px 20px;
+  font-size: 1em;
+  cursor: pointer;
+  z-index: 100;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+.feedback-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+  background: rgba(37, 253, 233, 1);
+}
+
+.watched-films-button {
+  position: fixed;
+  bottom: 20px;
+  right: 150px;
+  background: rgba(37, 253, 233, 0.9);
+  color: #1f2937;
+  border: none;
+  border-radius: 30px;
+  padding: 10px 20px;
+  font-size: 1em;
+  cursor: pointer;
+  z-index: 100;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+.watched-films-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+  background: rgba(37, 253, 233, 1);
+}
+
+/* Media queries for the watched films button */
+@media (max-width: 768px) {
+  .watched-films-button {
+    bottom: 15px;
+    right: 140px;
+    padding: 8px 16px;
+    font-size: 0.9em;
+  }
+}
+
+@media (max-width: 480px) {
+  .watched-films-button {
+    bottom: 15px;
+    right: 130px;
+    padding: 6px 12px;
+    font-size: 0.8em;
+  }
+}

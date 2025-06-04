@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
+import './components/ActionButtons.css'; // Import the ActionButtons CSS
 import axios from 'axios';
 import { db } from './firebase'; // Import Firestore
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
@@ -22,6 +23,13 @@ import { auth } from './firebase';
 import Login from './Login';
 import { onAuthStateChanged } from 'firebase/auth';
 import { addWatchedFilm, isFilmWatched, getWatchedFilms } from './firebase/watchedFilms';
+
+// Import our new components
+import SectionTitle from './components/SectionTitle';
+import Button from './components/Button';
+import Card from './components/Card';
+import Modal from './components/Modal';
+import MoviePoster from './components/MoviePoster';
 
 // Helper function to convert a string to a URL-friendly slug
 // eslint-disable-next-line no-unused-vars
@@ -289,14 +297,20 @@ function App() {
       }
     };
 
-    // Clear local storage and reset filters on mount
-    localStorage.clear();
-    setGenre('');
-    setDuration('');
-    setDecade('');
-    setLanguage('');
-    setActor('');
-    setDirector('');
+    // Load preferences from localStorage on mount
+    const savedGenre = localStorage.getItem('genre') || '';
+    const savedDuration = localStorage.getItem('duration') || '';
+    const savedDecade = localStorage.getItem('decade') || '';
+    const savedLanguage = localStorage.getItem('language') || '';
+    const savedActor = localStorage.getItem('actor') || '';
+    const savedDirector = localStorage.getItem('director') || '';
+
+    setGenre(savedGenre);
+    setDuration(savedDuration);
+    setDecade(savedDecade);
+    setLanguage(savedLanguage);
+    setActor(savedActor);
+    setDirector(savedDirector);
 
     fetchTrendingFilms();
     fetchFilmOfTheMonth();
@@ -457,6 +471,15 @@ function App() {
 
   // getRecommendations (Updated for 16 suggestions with original language logic)
   const getRecommendations = async () => {
+    console.log('getRecommendations called with preferences:', {
+      genre,
+      duration,
+      decade,
+      language,
+      actor,
+      director
+    });
+
     setIsLoading(true);
     setRecommendations([]);
 
@@ -465,12 +488,28 @@ function App() {
     const hasPreferences =
       genre || duration || decade || language || trimmedActor || trimmedDirector;
 
+    console.log('Has preferences:', hasPreferences);
+
     if (!hasPreferences) {
       setRecommendations([
         {
           id: null,
           Poster: null,
           Title: 'Please enter at least one preference to get recommendations.',
+        },
+      ]);
+      setIsLoading(false);
+      return;
+    }
+
+    // Check if API key is available
+    if (!API_KEY) {
+      console.error('TMDB API key is missing');
+      setRecommendations([
+        {
+          id: null,
+          Poster: null,
+          Title: 'API key is missing. Please check configuration.',
         },
       ]);
       setIsLoading(false);
@@ -541,13 +580,35 @@ function App() {
 
       let allResults = directedMovies;
       if (!trimmedDirector) {
-        const genreId = genres.find((g) => g.name.toLowerCase() === genre.toLowerCase())?.id || '';
+        // Find genre ID with better error handling
+        let genreId = '';
+        if (genre) {
+          // Genre is already stored as ID from the select dropdown
+          genreId = genre;
+          const foundGenre = genres.find((g) => g.id.toString() === genre.toString());
+          if (foundGenre) {
+            console.log('Found genre:', foundGenre.name, 'with ID:', genreId);
+          } else {
+            console.warn('Genre ID not found:', genre, 'Available genres:', genres.map(g => `${g.name} (${g.id})`));
+          }
+        }
+
         const decadeFilter = decade
           ? `&primary_release_date.gte=${decade}-01-01&primary_release_date.lte=${parseInt(decade) + 9}-12-31`
           : '';
-        const languageFilter = language && languageMap[language.toLowerCase()]
-          ? `&with_original_language=${languageMap[language.toLowerCase()]}`
-          : '';
+
+        // Language filter with better error handling
+        let languageFilter = '';
+        if (language) {
+          const languageCode = languageMap[language.toLowerCase()];
+          if (languageCode) {
+            languageFilter = `&with_original_language=${languageCode}`;
+            console.log('Language filter applied:', language, '->', languageCode);
+          } else {
+            console.warn('Language not found in mapping:', language);
+          }
+        }
+
         const actorFilter = actorId ? `&with_cast=${actorId}` : '';
         const durationFilter = {
           short: '&with_runtime.lte=90',
@@ -555,13 +616,30 @@ function App() {
           long: '&with_runtime.gte=120',
         }[duration.toLowerCase()] || '';
 
+        console.log('Filters applied:', {
+          genreId,
+          decadeFilter,
+          languageFilter,
+          actorFilter,
+          durationFilter
+        });
+
         for (let page = 1; page <= 3; page++) {
           const query = `https://api.themoviedb.org/3/discover/movie?api_key=${API_KEY}` +
             `${genreId ? `&with_genres=${genreId}` : ''}` +
             `${decadeFilter}${languageFilter}${actorFilter}${durationFilter}` +
             `&sort_by=popularity.desc&page=${page}`;
-          const response = await axios.get(query);
-          allResults = [...allResults, ...response.data.results];
+
+          console.log(`Making API call for page ${page}:`, query);
+
+          try {
+            const response = await axios.get(query);
+            console.log(`Page ${page} results:`, response.data.results.length, 'movies');
+            allResults = [...allResults, ...response.data.results];
+          } catch (apiError) {
+            console.error(`Error fetching page ${page}:`, apiError);
+            // Continue with other pages even if one fails
+          }
         }
       }
 
@@ -586,7 +664,16 @@ function App() {
       );
 
       const validMovies = moviesWithDetails.filter((movie) => movie !== null);
-      const genreId = genres.find((g) => g.name.toLowerCase() === genre.toLowerCase())?.id || '';
+      console.log('Valid movies before filtering:', validMovies.length);
+
+      // Get genre ID for filtering (same logic as above)
+      let genreIdForFiltering = '';
+      if (genre) {
+        // Genre is already stored as ID from the select dropdown
+        genreIdForFiltering = parseInt(genre);
+        console.log('Using genre ID for filtering:', genreIdForFiltering);
+      }
+
       const filteredResults = validMovies.filter((movie) => {
         const runtime = movie.runtime || 0;
         const matchesDuration = duration.toLowerCase() === 'short'
@@ -601,13 +688,28 @@ function App() {
             movie.release_date.substring(0, 4) >= decade &&
             movie.release_date.substring(0, 4) <= (parseInt(decade) + 9))
           : true;
-        const matchesGenre = genre ? movie.genres.includes(genreId) : true;
+        const matchesGenre = genre ? (movie.genres && movie.genres.includes(genreIdForFiltering)) : true;
         const matchesLanguage = language
           ? movie.original_language === languageMap[language.toLowerCase()]
           : true;
-        const matchesActor = actorId ? movie.cast.includes(parseInt(actorId)) : true;
-        return matchesDuration && matchesDecade && matchesGenre && matchesLanguage && matchesActor;
+        const matchesActor = actorId ? (movie.cast && movie.cast.includes(parseInt(actorId))) : true;
+
+        const matches = matchesDuration && matchesDecade && matchesGenre && matchesLanguage && matchesActor;
+
+        // Only log filtered out movies if we want to debug
+        if (!matches && (genre || language || duration || decade)) {
+          console.log('Movie filtered out:', movie.title, 'Reasons:', {
+            genre: !matchesGenre ? 'genre mismatch' : 'ok',
+            language: !matchesLanguage ? 'language mismatch' : 'ok',
+            duration: !matchesDuration ? 'duration mismatch' : 'ok',
+            decade: !matchesDecade ? 'decade mismatch' : 'ok'
+          });
+        }
+
+        return matches;
       }).slice(0, 16);  // Changed from 10 to 16
+
+      console.log('Filtered results:', filteredResults.length);
 
       if (filteredResults.length === 0) {
         setRecommendations([{ id: null, Poster: null, Title: 'No movies found matching your criteria. Try adjusting your preferences.' }]);
@@ -1053,7 +1155,7 @@ function App() {
                   alt="Dr FilmBot Illustration"
                   className="dr-filmbot-illustration"
                 />
-                <h2 className="section-title">Ask Dr FilmBot</h2>
+                <SectionTitle>Ask Dr FilmBot</SectionTitle>
                 <label htmlFor="dr-filmbot-input" style={{ display: 'block', marginBottom: '10px', color: '#d1d5db' }}>
                   Describe your mood or preferences:
                 </label>
@@ -1065,13 +1167,15 @@ function App() {
                   onChange={(e) => setDrFilmBotUserInput(e.target.value)}
                   className="dr-filmbot-input-textarea"
                 />
-                <button
-                  className="dr-filmbot-button"
+                <Button
+                  variant="primary"
+                  size="large"
                   onClick={() => askDrFilmBot(drFilmBotUserInput)}
                   disabled={isDrFilmBotLoading || !drFilmBotUserInput.trim()}
+                  className="dr-filmbot-button"
                 >
                   {isDrFilmBotLoading ? 'Loading...' : 'Get Recommendation'}
-                </button>
+                </Button>
                 {isDrFilmBotLoading ? (
                   <div className="spinner" style={{ marginTop: '20px' }}></div>
                 ) : drFilmBotSuggestions.length > 0 ? (
@@ -1107,7 +1211,9 @@ function App() {
 
                             {/* Watched button - placed under the title */}
                             {suggestion.id && (
-                              <button
+                              <Button
+                                variant="primary"
+                                size="small"
                                 className={`watched-button ${isMarkingWatched ? 'is-loading' : ''}`}
                                 onClick={(e) => {
                                   e.stopPropagation(); // Prevent opening the movie details
@@ -1118,10 +1224,10 @@ function App() {
                                   }, e);
                                 }}
                                 disabled={isMarkingWatched}
-                                title="Mark as watched"
+                                ariaLabel="Mark as watched"
                               >
                                 Already watched it
-                              </button>
+                              </Button>
                             )}
 
                             <p>{suggestion.description}</p>
@@ -1142,7 +1248,7 @@ function App() {
 
                 {/* Add Your Preferences Section - Moved under DrFilmBot */}
                 <div className="preferences-section" style={{ marginTop: '30px' }}>
-                  <h3 className="subsection-title">Add Your Preferences</h3>
+                  <SectionTitle size="small">Add Your Preferences</SectionTitle>
                   <div className="input-container">
                     <div className="input-group">
                       <img src={iconGenre} alt="Genre Icon" />
@@ -1231,15 +1337,43 @@ function App() {
                   </div>
                   {/* Buttons */}
                   <div className="button-group">
-                    <button onClick={getRecommendations} disabled={isLoading} className={isLoading ? 'button-disabled' : ''}>
+                    <Button
+                      variant="primary"
+                      size="medium"
+                      onClick={getRecommendations}
+                      disabled={isLoading}
+                      className={isLoading ? 'button-disabled' : ''}
+                    >
                       {isLoading ? 'Loading...' : 'GET MY FILM'}
-                    </button>
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="small"
+                      onClick={() => {
+                        setGenre('');
+                        setDuration('');
+                        setDecade('');
+                        setLanguage('');
+                        setActor('');
+                        setDirector('');
+                        localStorage.removeItem('genre');
+                        localStorage.removeItem('duration');
+                        localStorage.removeItem('decade');
+                        localStorage.removeItem('language');
+                        localStorage.removeItem('actor');
+                        localStorage.removeItem('director');
+                        console.log('Preferences cleared');
+                      }}
+                      style={{ marginTop: '10px', fontSize: '12px' }}
+                    >
+                      Clear Preferences
+                    </Button>
                   </div>
                 </div>
 
                 {/* Your Recommendations Section - Moved under DrFilmBot */}
                 <div className="recommendations-section" style={{ marginTop: '30px' }}>
-                  <h3 className="subsection-title">Your Recommendations</h3>
+                  <SectionTitle size="small">Your Recommendations</SectionTitle>
                   <div className="recommendation">
                     {isLoading ? (
                       <div className="spinner"></div>
@@ -1270,16 +1404,17 @@ function App() {
                 <div className="trending-section">
                   <div className="trending-container">
                     <div className="trending-recommendation">
-                      <h2 className="section-title">Top 3 Trending Films This Week</h2>
+                      <SectionTitle>Top 3 Trending Films This Week</SectionTitle>
                       <div className="poster-container">
                         {trendingFilms.map((film, index) => (
                           <div key={index} className="recommendation-item">
                             {film.Poster ? (
-                              <img
+                              <MoviePoster
                                 src={film.Poster}
-                                alt={`Trending Movie Poster ${index + 1}`}
-                                className="trending-poster"
+                                alt={`${film.Title} Poster`}
+                                size="medium"
                                 onClick={() => fetchMovieDetails(film.id)}
+                                className="trending-poster"
                               />
                             ) : (
                               <p>{film.Title}</p>
@@ -1296,11 +1431,16 @@ function App() {
           {/* Film of the Month Section */}
           <div className="section">
             <div className="section-container">
-              <h2 className="section-title">Film Of The Month</h2>
+              <SectionTitle>Film Of The Month</SectionTitle>
               <div className="film-of-the-month-button-container">
-                <button onClick={() => setShowMovieOfTheMonth(true)} className="film-of-the-month-button">
+                <Button
+                  variant="primary"
+                  size="large"
+                  onClick={() => setShowMovieOfTheMonth(true)}
+                  className="film-of-the-month-button"
+                >
                   View This Month's Selection
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -1309,11 +1449,17 @@ function App() {
           {/* Surprise Me Section */}
           <div className="section">
             <div className="section-container section-alt">
-              <h2 className="section-title">Feeling Adventurous?</h2>
+              <SectionTitle>Feeling Adventurous?</SectionTitle>
               <div className="surprise-button-container">
-                <button onClick={getRandomRecommendation} disabled={isLoading} className={isLoading ? 'button-disabled surprise-button' : 'surprise-button'}>
+                <Button
+                  variant="primary"
+                  size="large"
+                  onClick={getRandomRecommendation}
+                  disabled={isLoading}
+                  className={isLoading ? 'button-disabled surprise-button' : 'surprise-button'}
+                >
                   {isLoading ? 'Loading...' : 'Surprise Me!'}
-                </button>
+                </Button>
                 <p className="random-pick-text">Get a completely random film recommendation</p>
               </div>
             </div>
@@ -1328,8 +1474,13 @@ function App() {
           )}
           {/* Movie Details Modal */}
           {selectedMovie && movieDetails && (
-            <div className="modal" onClick={closeModal}>
-              <div className="modal-content movie-detail-modal" onClick={(e) => e.stopPropagation()}>
+            <Modal
+              isOpen={true}
+              onClose={closeModal}
+              size="large"
+              variant="primary"
+              className="movie-detail-modal"
+            >
                 {movieDetails.error ? (
                   <p>{movieDetails.error}</p>
                 ) : movieDetails.id !== selectedMovie ? (
@@ -1435,80 +1586,129 @@ function App() {
                     <div className="movie-detail-actions">
                       {/* Watch Trailer Button */}
                       {movieDetails.trailerKey && (
-                        <button className="movie-trailer-button" onClick={playTrailer}>
+                        <Button
+                          variant="primary"
+                          size="large"
+                          onClick={playTrailer}
+                          className="movie-trailer-button"
+                        >
                           <span className="trailer-icon">▶</span> Watch Trailer
-                        </button>
+                        </Button>
                       )}
                     </div>
 
                     <div className="movie-detail-share">
                       <h3 className="share-title">Share this film</h3>
                       <div className="share-buttons">
-                        <button className="share-button x-button" onClick={() => shareOnX(movieDetails)}>
+                        <Button
+                          variant="text"
+                          size="small"
+                          onClick={() => shareOnX(movieDetails)}
+                          className="share-button x-button"
+                        >
                           <img src={xIcon} alt="Share on X" className="share-icon" /> Twitter
-                        </button>
-                        <button className="share-button facebook-button" onClick={() => shareOnFacebook(movieDetails)}>
+                        </Button>
+                        <Button
+                          variant="text"
+                          size="small"
+                          onClick={() => shareOnFacebook(movieDetails)}
+                          className="share-button facebook-button"
+                        >
                           <img src={facebookIcon} alt="Share on Facebook" className="share-icon" /> Facebook
-                        </button>
-                        <button className="share-button whatsapp-button" onClick={() => shareOnWhatsApp(movieDetails)}>
+                        </Button>
+                        <Button
+                          variant="text"
+                          size="small"
+                          onClick={() => shareOnWhatsApp(movieDetails)}
+                          className="share-button whatsapp-button"
+                        >
                           <img src={whatsappIcon} alt="Share on WhatsApp" className="share-icon" /> WhatsApp
-                        </button>
-                        <button className="share-button instagram-button" onClick={() => shareOnInstagram(movieDetails)}>
+                        </Button>
+                        <Button
+                          variant="text"
+                          size="small"
+                          onClick={() => shareOnInstagram(movieDetails)}
+                          className="share-button instagram-button"
+                        >
                           <img src={instagramIcon} alt="Share on Instagram" className="share-icon" /> Instagram
-                        </button>
+                        </Button>
                       </div>
                     </div>
                   </div>
                 )}
-              </div>
-            </div>
+            </Modal>
           )}
-          {/* Watched Films Button */}
-          <button
-            onClick={toggleWatchedFilmsPage}
-            className="watched-films-button"
-            aria-label="View your watched films"
-          >
-            Watched Films
-          </button>
+          {/* Watched Films Button - positioned in top right corner */}
+          <div className="watched-films-button-container">
+            <Button
+              variant="outline"
+              size="medium"
+              onClick={toggleWatchedFilmsPage}
+              ariaLabel="View your watched films"
+            >
+              Watched Films
+            </Button>
+          </div>
 
           {/* Tip Button */}
-          <a
-            href="https://buymeacoffee.com/filmseeker"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="tip-button"
-            aria-label="Send a tip to support FilmSeeker"
-          >
-            <img src={tipIcon} alt="Tip Icon" className="tip-icon" />
-          </a>
+          <div className="tip-button-container">
+            <a
+              href="https://buymeacoffee.com/filmseeker"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Send a tip to support FilmSeeker"
+            >
+              <img src={tipIcon} alt="Tip Icon" className="tip-icon" />
+            </a>
+          </div>
 
-          {/* Message Button */}
-          <button
-            onClick={openMessagePopup}
-            className="feedback-button"
-            aria-label="Send us a message"
-          >
-            Feedback
-          </button>
+          {/* Message Button - positioned next to the tip button */}
+          <div className="feedback-button-container">
+            <Button
+              variant="primary"
+              size="small"
+              onClick={openMessagePopup}
+              ariaLabel="Send us a message"
+            >
+              Feedback
+            </Button>
+          </div>
 
           {/* Message Modal */}
           {showMessagePopup && (
-            <div className="modal" onClick={closeMessagePopup}>
-              <div className="modal-content message-modal" onClick={(e) => e.stopPropagation()}>
-                <h2>Send us a Message</h2>
-                <textarea
-                  className="message-input"
-                  placeholder="Your message here..."
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                ></textarea>
-                <div className="modal-buttons">
-                  <button onClick={sendMessage} className="send-button">Send</button>
-                  <button onClick={closeMessagePopup} className="cancel-button">Cancel</button>
-                </div>
+            <Modal
+              isOpen={true}
+              onClose={closeMessagePopup}
+              size="small"
+              variant="primary"
+              className="message-modal"
+            >
+              <h2>Send us a Message</h2>
+              <textarea
+                className="message-input"
+                placeholder="Your message here..."
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+              ></textarea>
+              <div className="modal-buttons">
+                <Button
+                  variant="primary"
+                  size="medium"
+                  onClick={sendMessage}
+                  className="send-button"
+                >
+                  Send
+                </Button>
+                <Button
+                  variant="outline"
+                  size="medium"
+                  onClick={closeMessagePopup}
+                  className="cancel-button"
+                >
+                  Cancel
+                </Button>
               </div>
-            </div>
+            </Modal>
           )}
 
           {/* Watched Films Page */}
@@ -1522,47 +1722,58 @@ function App() {
 
           {/* About Us Modal */}
           {showAboutUs && (
-            <div className="modal" onClick={closeAboutUs}>
-              <div className="modal-content thank-you-modal" onClick={(e) => e.stopPropagation()}>
-                <h2>THANK YOU</h2>
-                <p>Thank you for being here.</p>
-                <p>And most of all, thank you for being curious about films.</p>
+            <Modal
+              isOpen={true}
+              onClose={closeAboutUs}
+              size="large"
+              variant="secondary"
+              className="thank-you-modal"
+            >
+              <h2>THANK YOU</h2>
+              <p>Thank you for being here.</p>
+              <p>And most of all, thank you for being curious about films.</p>
 
-                <p>At FilmSeeker, our purpose is simple:<br/>
-                To help you find the next film you're going to watch.<br/>
-                And then come back for another.<br/>
-                And another.<br/>
-                And another.<br/>
-                We believe there's always another story waiting to be found.</p>
+              <p>At FilmSeeker, our purpose is simple:<br/>
+              To help you find the next film you're going to watch.<br/>
+              And then come back for another.<br/>
+              And another.<br/>
+              And another.<br/>
+              We believe there's always another story waiting to be found.</p>
 
-                <p>We don't gather likes.<br/>
-                We don't make watch lists.<br/>
-                There are plenty of great apps out there for that.<br/>
-                We just want to help you find your next great film.<br/>
-                That's it.</p>
+              <p>We don't gather likes.<br/>
+              We don't make watch lists.<br/>
+              There are plenty of great apps out there for that.<br/>
+              We just want to help you find your next great film.<br/>
+              That's it.</p>
 
-                <p>And while you're here, we hope you'll feel encouraged to explore.<br/>
-                To experiment.<br/>
-                To discover films you might not have chosen otherwise.<br/>
-                Because sometimes, the most unexpected story can awaken something new inside you.<br/>
-                A film in a foreign language, made in a faraway place, can be surprisingly close to your own life experience.</p>
+              <p>And while you're here, we hope you'll feel encouraged to explore.<br/>
+              To experiment.<br/>
+              To discover films you might not have chosen otherwise.<br/>
+              Because sometimes, the most unexpected story can awaken something new inside you.<br/>
+              A film in a foreign language, made in a faraway place, can be surprisingly close to your own life experience.</p>
 
-                <p>We're always open to your suggestions, comments, feedback—even emojis.<br/>
-                Click the Message button and reach out any way you like.<br/>
-                We'd love to hear from you.</p>
+              <p>We're always open to your suggestions, comments, feedback—even emojis.<br/>
+              Click the Message button and reach out any way you like.<br/>
+              We'd love to hear from you.</p>
 
-                <p>And if you enjoyed your film recommendation or found something special through us,<br/>
-                you can always leave us a tip by clicking the Tip button on the main page.<br/>
-                It helps us keep the project alive—and makes our day!</p>
+              <p>And if you enjoyed your film recommendation or found something special through us,<br/>
+              you can always leave us a tip by clicking the Tip button on the main page.<br/>
+              It helps us keep the project alive—and makes our day!</p>
 
-                <p>Thank you for taking the time to read this modest text.<br/>
-                And thank you on behalf of all the artists who will be discovered—or rediscovered—through you.</p>
+              <p>Thank you for taking the time to read this modest text.<br/>
+              And thank you on behalf of all the artists who will be discovered—or rediscovered—through you.</p>
 
-                <p><strong>Enjoy the Films.</strong></p>
+              <p><strong>Enjoy the Films.</strong></p>
 
-                <button className="close-button" onClick={closeAboutUs}>Close</button>
-              </div>
-            </div>
+              <Button
+                variant="primary"
+                size="medium"
+                onClick={closeAboutUs}
+                className="close-button"
+              >
+                Close
+              </Button>
+            </Modal>
           )}
 
 
