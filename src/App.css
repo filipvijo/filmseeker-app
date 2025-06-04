@@ -2490,29 +2490,7 @@ input:focus, select:focus {
   width: 100%;
 }
 
-.section::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 80%;
-  max-width: 800px;
-  height: 1px;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(37, 253, 233, 0.5), rgba(255, 255, 255, 0));
-}
 
-.section::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 80%;
-  max-width: 800px;
-  height: 1px;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(37, 253, 233, 0.5), rgba(255, 255, 255, 0));
-}
 
 .section-title {
   font-size: 2.2em;
@@ -2612,11 +2590,35 @@ input:focus, select:focus {
     padding: 15px;
     width: 95%;
   }
-}/* Watched Films Button Styles */
-.watched-films-button {
+}
+
+/* Action Buttons Container - Top Right Corner */
+.action-buttons-container {
   position: fixed;
   top: 20px;
   right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 2000; /* Very high z-index to ensure it's above everything */
+}
+
+/* Desktop: Fixed position (no scroll movement) */
+@media (min-width: 769px) {
+  .action-buttons-container {
+    position: fixed;
+  }
+}
+
+/* Mobile: Absolute position (moves with scroll) */
+@media (max-width: 768px) {
+  .action-buttons-container {
+    position: absolute;
+  }
+}
+
+/* Watched Films Button Styles */
+.watched-films-button {
   background: rgba(37, 253, 233, 0.9);
   color: #1f2937;
   border: none;
@@ -2624,7 +2626,6 @@ input:focus, select:focus {
   padding: 10px 20px;
   font-size: 1em;
   cursor: pointer;
-  z-index: 2000; /* Very high z-index to ensure it's above everything */
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
   transition: all 0.3s ease;
 }
@@ -2635,21 +2636,58 @@ input:focus, select:focus {
   background: rgba(37, 253, 233, 1);
 }
 
-/* Media queries for the watched films button */
+/* Surprise Me Button (Top Position) Styles */
+.surprise-button-top {
+  background: rgba(37, 253, 233, 0.9);
+  color: #1f2937;
+  border: none;
+  border-radius: 30px;
+  padding: 10px 20px;
+  font-size: 1em;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+.surprise-button-top:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.4);
+  background: rgba(37, 253, 233, 1);
+}
+
+/* Media queries for the action buttons */
 @media (max-width: 768px) {
-  .watched-films-button {
-    top: 15px;
-    right: 15px;
-    padding: 8px 16px;
-    font-size: 0.9em;
+  .action-buttons-container {
+    position: absolute; /* Moves with scroll on mobile */
+    top: 8px;
+    right: 8px;
+    gap: 3px;
+  }
+
+  .watched-films-button,
+  .surprise-button-top {
+    padding: 3px 8px;
+    font-size: 0.65em;
+    border-radius: 12px;
+    min-width: auto;
+    white-space: nowrap;
   }
 }
 
 @media (max-width: 480px) {
-  .watched-films-button {
-    top: 15px;
-    right: 15px;
-    padding: 6px 12px;
-    font-size: 0.8em;
+  .action-buttons-container {
+    position: absolute; /* Moves with scroll on mobile */
+    top: 5px;
+    right: 5px;
+    gap: 2px;
+  }
+
+  .watched-films-button,
+  .surprise-button-top {
+    padding: 2px 6px;
+    font-size: 0.6em;
+    border-radius: 10px;
+    min-width: auto;
+    white-space: nowrap;
   }
 }

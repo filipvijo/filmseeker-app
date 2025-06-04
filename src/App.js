@@ -22,12 +22,12 @@ import WatchedFilmsPage from './components/WatchedFilmsPage';
 import { auth } from './firebase';
 import Login from './Login';
 import { onAuthStateChanged } from 'firebase/auth';
-import { addWatchedFilm, isFilmWatched, getWatchedFilms } from './firebase/watchedFilms';
+import { addWatchedFilm, getWatchedFilms } from './firebase/watchedFilms';
 
 // Import our new components
 import SectionTitle from './components/SectionTitle';
 import Button from './components/Button';
-import Card from './components/Card';
+
 import Modal from './components/Modal';
 import MoviePoster from './components/MoviePoster';
 
@@ -452,6 +452,11 @@ function App() {
         prevSuggestions.filter(suggestion => suggestion.id !== film.id)
       );
 
+      // Remove the film from regular recommendations
+      setRecommendations(prevRecommendations =>
+        prevRecommendations.filter(rec => rec.id !== film.id)
+      );
+
       setIsMarkingWatched(false);
     } catch (error) {
       console.error('Error marking film as watched:', error);
@@ -711,10 +716,18 @@ function App() {
 
       console.log('Filtered results:', filteredResults.length);
 
-      if (filteredResults.length === 0) {
-        setRecommendations([{ id: null, Poster: null, Title: 'No movies found matching your criteria. Try adjusting your preferences.' }]);
+      // Filter out watched movies
+      const unwatchedResults = filteredResults.filter(movie => !checkIfWatched(movie.id));
+      console.log('Unwatched results:', unwatchedResults.length);
+
+      if (unwatchedResults.length === 0) {
+        if (filteredResults.length > 0) {
+          setRecommendations([{ id: null, Poster: null, Title: 'You\'ve watched all movies matching your criteria! Try adjusting your preferences for new recommendations.' }]);
+        } else {
+          setRecommendations([{ id: null, Poster: null, Title: 'No movies found matching your criteria. Try adjusting your preferences.' }]);
+        }
       } else {
-        setRecommendations(filteredResults.map((movie) => ({
+        setRecommendations(unwatchedResults.map((movie) => ({
           id: movie.id,
           Poster: movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : null,
           Title: movie.title,
@@ -733,22 +746,39 @@ function App() {
     setIsLoading(true);
     setRecommendations([]);
     try {
-      const randomPage = Math.floor(Math.random() * 500) + 1;
-      const response = await axios.get(
-        `https://api.themoviedb.org/3/discover/movie?api_key=${API_KEY}&sort_by=popularity.desc&page=${randomPage}`
-      );
-      const movies = response.data.results;
-      if (movies.length > 0) {
-        const randomMovie = movies[Math.floor(Math.random() * movies.length)];
-        setRecommendations([
-          {
-            id: randomMovie.id,
-            Poster: randomMovie.poster_path ? `https://image.tmdb.org/t/p/w500${randomMovie.poster_path}` : null,
-            Title: randomMovie.title,
-          },
-        ]);
-      } else {
-        setRecommendations([{ id: null, Poster: null, Title: 'No movies found. Try again!' }]);
+      let attempts = 0;
+      const maxAttempts = 10;
+
+      while (attempts < maxAttempts) {
+        const randomPage = Math.floor(Math.random() * 500) + 1;
+        const response = await axios.get(
+          `https://api.themoviedb.org/3/discover/movie?api_key=${API_KEY}&sort_by=popularity.desc&page=${randomPage}`
+        );
+        const movies = response.data.results;
+
+        if (movies.length > 0) {
+          // Filter out watched movies
+          const unwatchedMovies = movies.filter(movie => !checkIfWatched(movie.id));
+
+          if (unwatchedMovies.length > 0) {
+            const randomMovie = unwatchedMovies[Math.floor(Math.random() * unwatchedMovies.length)];
+            setRecommendations([
+              {
+                id: randomMovie.id,
+                Poster: randomMovie.poster_path ? `https://image.tmdb.org/t/p/w500${randomMovie.poster_path}` : null,
+                Title: randomMovie.title,
+              },
+            ]);
+            break;
+          }
+        }
+
+        attempts++;
+      }
+
+      // If we couldn't find any unwatched movies after max attempts
+      if (attempts >= maxAttempts) {
+        setRecommendations([{ id: null, Poster: null, Title: 'Try adjusting your preferences - you might have watched most popular movies!' }]);
       }
     } catch (error) {
       console.error('Error fetching random recommendation:', error);
@@ -1381,7 +1411,36 @@ function App() {
                       recommendations.map((rec, index) => (
                         <div key={index} className="recommendation-item">
                           {rec.Poster ? (
-                            <img src={rec.Poster} alt={`Movie Poster ${index + 1}`} className="poster" onClick={() => fetchMovieDetails(rec.id)} />
+                            <>
+                              <img
+                                src={rec.Poster}
+                                alt={`${rec.Title} Poster`}
+                                className="poster"
+                                onClick={() => fetchMovieDetails(rec.id)}
+                              />
+                              <p>{rec.Title}</p>
+
+                              {/* Already watched it button - placed under the title */}
+                              {rec.id && (
+                                <Button
+                                  variant="primary"
+                                  size="small"
+                                  className={`watched-button ${isMarkingWatched ? 'is-loading' : ''}`}
+                                  onClick={(e) => {
+                                    e.stopPropagation(); // Prevent opening the movie details
+                                    markFilmAsWatched({
+                                      id: rec.id,
+                                      title: rec.Title,
+                                      poster: rec.Poster
+                                    }, e);
+                                  }}
+                                  disabled={isMarkingWatched}
+                                  ariaLabel="Mark as watched"
+                                >
+                                  Already watched it
+                                </Button>
+                              )}
+                            </>
                           ) : (
                             <p>{rec.Title}</p>
                           )}
@@ -1446,24 +1505,7 @@ function App() {
           </div>
 
 
-          {/* Surprise Me Section */}
-          <div className="section">
-            <div className="section-container section-alt">
-              <SectionTitle>Feeling Adventurous?</SectionTitle>
-              <div className="surprise-button-container">
-                <Button
-                  variant="primary"
-                  size="large"
-                  onClick={getRandomRecommendation}
-                  disabled={isLoading}
-                  className={isLoading ? 'button-disabled surprise-button' : 'surprise-button'}
-                >
-                  {isLoading ? 'Loading...' : 'Surprise Me!'}
-                </Button>
-                <p className="random-pick-text">Get a completely random film recommendation</p>
-              </div>
-            </div>
-          </div>
+
           {/* Movie of the Month Modal */}
           {showMovieOfTheMonth && movieOfTheMonthDetails && (
             <FilmOfMonth
@@ -1638,15 +1680,26 @@ function App() {
                 )}
             </Modal>
           )}
-          {/* Watched Films Button - positioned in top right corner */}
-          <div className="watched-films-button-container">
+          {/* Action Buttons - positioned in top right corner */}
+          <div className="action-buttons-container">
             <Button
               variant="outline"
               size="medium"
               onClick={toggleWatchedFilmsPage}
               ariaLabel="View your watched films"
+              className="watched-films-button"
             >
               Watched Films
+            </Button>
+            <Button
+              variant="primary"
+              size="medium"
+              onClick={getRandomRecommendation}
+              disabled={isLoading}
+              className={isLoading ? 'button-disabled surprise-button-top' : 'surprise-button-top'}
+              ariaLabel="Get a random film recommendation"
+            >
+              {isLoading ? 'Loading...' : 'Surprise Me!'}
             </Button>
           </div>
 

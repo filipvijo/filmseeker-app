@@ -144,17 +144,34 @@
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .btn--large {
-    padding: var(--space-sm) var(--space-lg);
-    font-size: var(--font-size-md);
+    padding: 4px 8px;
+    font-size: 0.7rem;
   }
-  
+
   .btn--medium {
-    padding: var(--space-xs) var(--space-md);
-    font-size: var(--font-size-sm);
+    padding: 3px 6px;
+    font-size: 0.65rem;
   }
-  
+
   .btn--small {
-    padding: var(--space-xxs) var(--space-sm);
-    font-size: var(--font-size-xs);
+    padding: 2px 4px;
+    font-size: 0.6rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .btn--large {
+    padding: 3px 6px;
+    font-size: 0.65rem;
+  }
+
+  .btn--medium {
+    padding: 2px 4px;
+    font-size: 0.6rem;
+  }
+
+  .btn--small {
+    padding: 1px 3px;
+    font-size: 0.55rem;
   }
 }
