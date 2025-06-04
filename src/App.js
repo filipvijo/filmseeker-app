@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 import './components/ActionButtons.css'; // Import the ActionButtons CSS
 import axios from 'axios';
@@ -140,6 +140,9 @@ function App() {
 
   // User State
   const [user, setUser] = useState(null);
+
+  // Ref for auto-scrolling to recommendations
+  const recommendationsRef = useRef(null);
 
   // TMDB API key from your .env file
   const API_KEY = process.env.REACT_APP_TMDB_API_KEY;
@@ -738,6 +741,16 @@ function App() {
       setRecommendations([{ id: null, Poster: null, Title: 'Error loading recommendations' }]);
     } finally {
       setIsLoading(false);
+
+      // Auto-scroll to recommendations section after a short delay
+      setTimeout(() => {
+        if (recommendationsRef.current) {
+          recommendationsRef.current.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+        }
+      }, 100);
     }
   };
 
@@ -769,6 +782,17 @@ function App() {
                 Title: randomMovie.title,
               },
             ]);
+
+            // Auto-scroll to recommendations section after a short delay
+            setTimeout(() => {
+              if (recommendationsRef.current) {
+                recommendationsRef.current.scrollIntoView({
+                  behavior: 'smooth',
+                  block: 'start'
+                });
+              }
+            }, 100);
+
             break;
           }
         }
@@ -1402,7 +1426,7 @@ function App() {
                 </div>
 
                 {/* Your Recommendations Section - Moved under DrFilmBot */}
-                <div className="recommendations-section" style={{ marginTop: '30px' }}>
+                <div className="recommendations-section" style={{ marginTop: '30px' }} ref={recommendationsRef}>
                   <SectionTitle size="small">Your Recommendations</SectionTitle>
                   <div className="recommendation">
                     {isLoading ? (
