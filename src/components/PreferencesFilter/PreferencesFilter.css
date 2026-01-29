@@ -1,0 +1,151 @@
+/* Add to existing PreferencesFilter.css */
+
+.pref-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pref-icon img {
+    width: 64px;
+    height: 64px;
+    object-fit: contain;
+    margin-bottom: 0.5rem;
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.4));
+    transition: transform 0.3s ease;
+}
+
+.preference-item:hover .pref-icon img {
+    transform: scale(1.1) rotate(5deg);
+}
+
+.preferences-container {
+    padding: 2rem;
+    background: linear-gradient(180deg, rgba(16, 20, 50, 0.4) 0%, rgba(10, 10, 30, 0.8) 100%);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    margin-bottom: 2rem;
+}
+
+.preferences-title {
+    text-align: center;
+    font-size: 2rem;
+    margin-bottom: 2rem;
+    color: #4facfe;
+    text-shadow: 0 0 10px rgba(79, 172, 254, 0.5);
+}
+
+.preferences-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 2rem;
+}
+
+.preference-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+
+.preference-item label {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #e0e0e0;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.preference-item select,
+.preference-item input {
+    width: 100%;
+    padding: 12px 16px;
+    background: rgba(18, 20, 40, 0.8);
+    border: 1px solid rgba(79, 172, 254, 0.3);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 1rem;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.preference-item select:focus,
+.preference-item input:focus {
+    border-color: #4facfe;
+    box-shadow: 0 0 10px rgba(79, 172, 254, 0.3);
+    background: rgba(25, 30, 60, 0.9);
+}
+
+.preference-item option {
+    background: #1a1f3c;
+    color: #fff;
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+    .preferences-container {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .preferences-title {
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .preferences-grid {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .pref-icon img {
+        width: 48px;
+        height: 48px;
+    }
+
+    .preference-item label {
+        font-size: 0.9rem;
+    }
+
+    .preference-item select,
+    .preference-item input {
+        padding: 10px 14px;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .preferences-container {
+        padding: 1rem;
+        border-radius: 16px;
+    }
+
+    .preferences-title {
+        font-size: 1.3rem;
+        margin-bottom: 1rem;
+    }
+
+    .preferences-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .pref-icon img {
+        width: 40px;
+        height: 40px;
+    }
+
+    .preference-item label {
+        font-size: 0.8rem;
+        letter-spacing: 0.5px;
+    }
+
+    .preference-item select,
+    .preference-item input {
+        padding: 8px 12px;
+        font-size: 0.85rem;
+        border-radius: 6px;
+    }
+}

@@ -1,212 +1,249 @@
-// FilmDetail.js
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { useParams } from 'react-router-dom';
-import { Helmet } from 'react-helmet';
+import { motion } from 'framer-motion';
+import { ArrowLeft, Clock, Calendar, Star, Play, User as UserIcon, Check, Share2, Twitter, Facebook as FacebookIcon, Instagram as InstagramIcon } from 'lucide-react';
 import './FilmDetail.css';
+import { useFilm } from './context/FilmContext';
 
 const FilmDetail = () => {
-  const { id } = useParams(); // Get the movie ID from the URL
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { apiKey, toggleWatched, isWatched } = useFilm();
   const [movie, setMovie] = useState(null);
-  const [error, setError] = useState('');
-  const [watchProviders, setWatchProviders] = useState([]);
-  const API_KEY = process.env.REACT_APP_TMDB_API_KEY;
+  const [credits, setCredits] = useState(null);
+  const [videos, setVideos] = useState([]);
+  const [providers, setProviders] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const watched = movie ? isWatched(movie.id) : false;
 
   useEffect(() => {
-    const fetchMovie = async () => {
+    const fetchDetails = async () => {
       try {
-        // Append credits to get director and cast info
-        const response = await axios.get(
-          `https://api.themoviedb.org/3/movie/${id}?api_key=${API_KEY}&append_to_response=credits`
-        );
-        setMovie(response.data);
-        // Fetch watch providers
-        const providersRes = await axios.get(
-          `https://api.themoviedb.org/3/movie/${id}/watch/providers?api_key=${API_KEY}`
-        );
-        // Default to US, fallback to any available country
-        const country = providersRes.data.results['US']
-          ? 'US'
-          : Object.keys(providersRes.data.results)[0];
-        const providerData = country ? providersRes.data.results[country] : null;
-        if (providerData && providerData.flatrate) {
-          setWatchProviders(providerData.flatrate);
-        } else {
-          setWatchProviders([]);
-        }
+        const [movieRes, creditsRes, videosRes, providersRes] = await Promise.all([
+          axios.get(`https://api.themoviedb.org/3/movie/${id}?api_key=${apiKey}`),
+          axios.get(`https://api.themoviedb.org/3/movie/${id}/credits?api_key=${apiKey}`),
+          axios.get(`https://api.themoviedb.org/3/movie/${id}/videos?api_key=${apiKey}`),
+          axios.get(`https://api.themoviedb.org/3/movie/${id}/watch/providers?api_key=${apiKey}`)
+        ]);
+
+        setMovie(movieRes.data);
+        setCredits(creditsRes.data);
+        setVideos(videosRes.data.results);
+        // Get providers with the JustWatch link
+        const providerData = providersRes.data.results.US || providersRes.data.results.GB;
+        setProviders(providerData);
+        setLoading(false);
       } catch (err) {
-        console.error('Error fetching movie details:', err);
-        setError('Failed to load movie details.');
+        console.error("Failed to fetch movie details", err);
+        setLoading(false);
       }
     };
-    fetchMovie();
-  }, [id, API_KEY]);
 
-  if (error) {
-    return (
-      <div className="film-detail-error">
-        <div>{error}</div>
+    if (apiKey) fetchDetails();
+  }, [id, apiKey]);
+
+  if (loading) return <div className="loading-screen">Loading Cinema...</div>;
+  if (!movie) return <div className="error-screen">Movie not found.</div>;
+
+  const trailer = videos.find(v => v.type === "Trailer" && v.site === "YouTube");
+  const director = credits?.crew.find(p => p.job === "Director");
+  const backdropUrl = `https://image.tmdb.org/t/p/original${movie.backdrop_path}`;
+  const posterUrl = `https://image.tmdb.org/t/p/w500${movie.poster_path}`;
+
+  // Helper for providers
+  const streaming = providers?.flatrate || providers?.rent || providers?.buy || [];
+  const topProviders = streaming.slice(0, 5); // Limit to 5
+
+  // Crew Helpers
+  const getCrew = (job) => credits?.crew?.find(p => p.job === job)?.name || 'N/A';
+  const displayCrew = (job, label) => {
+    const name = getCrew(job);
+    return name !== 'N/A' ? (
+      <div className="film-detail-meta-item">
+        <span className="film-detail-meta-label">{label}:</span>
+        <span className="film-detail-meta-value">{name}</span>
       </div>
-    );
-  }
+    ) : null;
+  };
 
-  if (!movie) {
-    return (
-      <div className="film-detail-loading">
-        <div>Loading...</div>
-      </div>
-    );
-  }
-
-  // Extract director from credits.crew (if available)
-  const directorObj =
-    movie.credits && movie.credits.crew
-      ? movie.credits.crew.find((person) => person.job === 'Director')
-      : null;
-  const directorName = directorObj ? directorObj.name : 'N/A';
-
-  // Get top 3 main actors from credits.cast
-  const actorNames =
-    movie.credits && movie.credits.cast
-      ? movie.credits.cast.slice(0, 3).map((actor) => actor.name)
-      : [];
-
-  // Extract production year from release_date
-  const productionYear = movie.release_date ? movie.release_date.split('-')[0] : 'N/A';
+  const shareText = `Check out ${movie.title} on FilmSeeker!`;
+  const shareUrl = window.location.href;
 
   return (
-    <div className="film-detail-container">
-      <Helmet>
-        <title>{movie.title} - FilmSeeker</title>
-        <meta property="og:title" content={movie.title} />
-        <meta property="og:description" content={movie.overview} />
-        {movie.poster_path && (
-          <meta
-            property="og:image"
-            content={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
-          />
-        )}
-        <meta property="og:url" content={`https://filmseeker-app.vercel.app/movie/${id}`} />
-      </Helmet>
+    <motion.div
+      className="film-detail-page"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
+      {/* Hero Backdrop */}
+      <div className="detail-hero" style={{ backgroundImage: `url(${backdropUrl})` }}>
+        <div className="hero-overlay"></div>
+        <button className="back-btn" onClick={() => navigate(-1)}>
+          <ArrowLeft size={24} /> Back
+        </button>
 
-      <div className="film-detail-content">
-        <div className="film-detail-header">
-          <h1 className="film-detail-title">{movie.title}</h1>
-        </div>
+        <div className="hero-content">
+          <motion.div
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="poster-container"
+          >
+            <img src={posterUrl} alt={movie.title} className="detail-poster" />
 
-        <div className="film-detail-main">
-          {movie.poster_path && (
-            <div className="film-detail-poster-container">
-              <img
-                src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
-                alt={`${movie.title} Poster`}
-                className="film-detail-poster"
-              />
+            {/* Watched Toggle (Desktop) */}
+            <button
+              className={`watched-btn-hero ${watched ? 'active' : ''}`}
+              onClick={() => toggleWatched(movie)}
+            >
+              {watched ? <Check size={20} /> : <UserIcon size={20} />}
+              {watched ? 'Watched' : 'Mark Watched'}
+            </button>
+          </motion.div>
+
+          <div className="info-container">
+            <motion.h1
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
+              {movie.title} <span className="release-year">({movie.release_date?.split('-')[0]})</span>
+            </motion.h1>
+
+            {/* Watched Toggle (Mobile) */}
+            <button
+              className={`watched-btn-mobile ${watched ? 'active' : ''}`}
+              onClick={() => toggleWatched(movie)}
+              style={{ display: 'none' }} // Hidden via logic normally, but added for structure
+            >
+              {watched ? 'Watched' : 'Seen it?'}
+            </button>
+
+            <div className="meta-row">
+              <span className="meta-tag"><Star size={16} fill="#FFD700" stroke="none" /> {movie.vote_average.toFixed(1)}</span>
+              <span className="meta-tag"><Clock size={16} /> {movie.runtime} min</span>
+              <span className="meta-tag"><Calendar size={16} /> {movie.release_date}</span>
             </div>
-          )}
 
-          <div className="film-detail-info">
-            <div className="film-detail-meta">
-              <div className="film-detail-meta-item">
-                <span className="film-detail-meta-label">Critic Score:</span>
-                <span className="film-detail-meta-value film-detail-rating">
-                  {movie.vote_average.toFixed(1)}/10
-                  <span className="film-detail-rating-star" role="img" aria-label="star">⭐</span>
-                </span>
-              </div>
+            <div className="genres-row">
+              {movie.genres.map(g => (
+                <span key={g.id} className="genre-pill">{g.name}</span>
+              ))}
+            </div>
 
-              <div className="film-detail-meta-item">
-                <span className="film-detail-meta-label">Duration:</span>
-                <span className="film-detail-meta-value">{movie.runtime} min</span>
-              </div>
+            <p className="tagline">{movie.tagline}</p>
 
-              <div className="film-detail-meta-item">
-                <span className="film-detail-meta-label">Director:</span>
-                <span className="film-detail-meta-value">{directorName}</span>
-              </div>
-
-              <div className="film-detail-meta-item">
-                <span className="film-detail-meta-label">Main Actors:</span>
-                <span className="film-detail-meta-value">
-                  {actorNames.length > 0 ? actorNames.join(', ') : 'N/A'}
-                </span>
-              </div>
-
-              <div className="film-detail-meta-item">
-                <span className="film-detail-meta-label">Year:</span>
-                <span className="film-detail-meta-value">{productionYear}</span>
-              </div>
-
-              {movie.genres && movie.genres.length > 0 && (
-                <div className="film-detail-meta-item">
-                  <span className="film-detail-meta-label">Genres:</span>
-                  <span className="film-detail-meta-value">
-                    {movie.genres.map(genre => genre.name).join(', ')}
-                  </span>
-                </div>
+            <div className="action-row">
+              {trailer && (
+                <a
+                  href={`https://www.youtube.com/watch?v=${trailer.key}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="trailer-btn"
+                >
+                  <Play size={20} fill="currentColor" /> Watch Trailer
+                </a>
               )}
             </div>
+
+            {/* Removed cluttered sections from hero */}
           </div>
         </div>
+      </div>
 
-        <div className="film-detail-overview">
-          {movie.overview}
-        </div>
+      {/* Content Body */}
+      <div className="detail-body">
+        <section className="overview-section">
+          <h2>Overview</h2>
+          <p>{movie.overview}</p>
 
-        {/* Streaming Providers Section */}
-        {watchProviders.length > 0 && (
-          <div className="film-detail-streaming">
-            <h3 className="film-detail-streaming-title">Available on:</h3>
-            <div className="film-detail-streaming-logos">
-              {watchProviders.map((provider) => (
+          <div className="film-detail-meta" style={{ marginTop: '30px' }}>
+            <div className="film-detail-meta-item">
+              <span className="film-detail-meta-label">Director:</span>
+              <span className="film-detail-meta-value">{director?.name}</span>
+            </div>
+
+            {displayCrew('Screenplay', 'Writer') || displayCrew('Writer', 'Writer')}
+            {displayCrew('Director of Photography', 'Cinematography')}
+            {displayCrew('Editor', 'Editing')}
+            {displayCrew('Original Music Composer', 'Music')}
+            {displayCrew('Production Design', 'Production Design')}
+          </div>
+        </section>
+
+        <section className="cast-section">
+          <h2>Top Cast</h2>
+          <div className="cast-grid">
+            {credits?.cast.slice(0, 6).map(actor => (
+              <div key={actor.id} className="cast-card">
+                <div className="cast-img-wrapper">
+                  {actor.profile_path ? (
+                    <img src={`https://image.tmdb.org/t/p/w200${actor.profile_path}`} alt={actor.name} />
+                  ) : (
+                    <div className="no-img"><UserIcon size={24} /></div>
+                  )}
+                </div>
+                <h3>{actor.name}</h3>
+                <p>{actor.character}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Where to Watch */}
+        {topProviders.length > 0 && (
+          <div className="providers-section">
+            <h3>Where to Watch</h3>
+            <div className="providers-list">
+              {topProviders.map(p => (
                 <a
-                  key={provider.provider_id}
-                  href={`https://www.justwatch.com/us/provider/${provider.provider_name.toLowerCase().replace(/\s+/g, '-')}`}
+                  key={p.provider_id}
+                  className="provider-item"
+                  href={providers?.link || `https://www.justwatch.com/us/search?q=${encodeURIComponent(movie.title)}`}
                   target="_blank"
-                  rel="noopener noreferrer"
-                  title={provider.provider_name}
-                  className="film-detail-provider-link"
+                  rel="noreferrer"
+                  title={`Watch on ${p.provider_name}`}
                 >
-                  <img
-                    src={`https://image.tmdb.org/t/p/w45${provider.logo_path}`}
-                    alt={provider.provider_name}
-                    className="film-detail-provider-logo"
-                  />
+                  <img src={`https://image.tmdb.org/t/p/w92${p.logo_path}`} alt={p.provider_name} />
+                  <span>{p.provider_name}</span>
                 </a>
               ))}
             </div>
+            <p className="providers-attribution">
+              <a href={providers?.link || `https://www.justwatch.com/us/search?q=${encodeURIComponent(movie.title)}`} target="_blank" rel="noreferrer">
+                View all options on JustWatch →
+              </a>
+            </p>
           </div>
         )}
 
-        {/* Sharing Section */}
-        <div className="film-detail-sharing">
-          <h3 className="film-detail-sharing-title">Share this film:</h3>
-          <div className="film-detail-sharing-buttons">
-            <button
-              className="film-detail-share-button"
-              onClick={() => window.open(`https://twitter.com/intent/tweet?text=Check out ${movie.title} on FilmSeeker!&url=https://filmseeker-app.vercel.app/movie/${id}`, '_blank')}
-            >
-              <span>🐦</span> Twitter
-            </button>
-            <button
-              className="film-detail-share-button"
-              onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=https://filmseeker-app.vercel.app/movie/${id}`, '_blank')}
-            >
-              <span>📘</span> Facebook
-            </button>
-            <button
-              className="film-detail-share-button"
-              onClick={() => {
-                navigator.clipboard.writeText(`https://filmseeker-app.vercel.app/movie/${id}`);
-                alert('Link copied to clipboard!');
-              }}
-            >
-              <span>📋</span> Copy Link
-            </button>
+        {/* Share this film */}
+        <div className="share-section">
+          <h3>Share this film</h3>
+          <div className="share-icons">
+            <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`} target="_blank" rel="noreferrer" className="share-icon">
+              <Twitter size={18} />
+              <span>X</span>
+            </a>
+            <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`} target="_blank" rel="noreferrer" className="share-icon">
+              <FacebookIcon size={18} />
+              <span>Facebook</span>
+            </a>
+            <a href={`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`} target="_blank" rel="noreferrer" className="share-icon">
+              <Share2 size={18} />
+              <span>WhatsApp</span>
+            </a>
+            <a href="https://instagram.com" target="_blank" rel="noreferrer" className="share-icon">
+              <InstagramIcon size={18} />
+              <span>Instagram</span>
+            </a>
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

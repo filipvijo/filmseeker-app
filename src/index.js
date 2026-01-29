@@ -1,28 +1,19 @@
 import React from 'react';
-import ReactDOM from 'react-dom/client';
+import { createRoot } from 'react-dom/client';
 import './variables.css';           // Design system variables
 import './index.css';               // Global CSS
 import App from './App';
-import FilmDetail from './FilmDetail'; // Import your new component
 import reportWebVitals from './reportWebVitals';
+import ErrorBoundary from './components/ErrorBoundary';
 
-// 1) Import BrowserRouter, Routes, and Route
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-
-const root = ReactDOM.createRoot(document.getElementById('root'));
+const container = document.getElementById('root');
+const root = createRoot(container);
 
 root.render(
   <React.StrictMode>
-    {/* 2) Wrap everything in BrowserRouter */}
-    <BrowserRouter>
-      <Routes>
-        {/* 3) The homepage at path="/" loads your App component */}
-        <Route path="/" element={<App />} />
-
-        {/* 4) The film detail page at path="/movie/:id" loads your FilmDetail component */}
-        <Route path="/movie/:id" element={<FilmDetail />} />
-      </Routes>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
   </React.StrictMode>
 );
 
