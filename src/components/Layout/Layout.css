@@ -98,6 +98,12 @@
 
 /* Mobile Responsive */
 @media (max-width: 768px) {
+    .app-layout {
+        overflow-x: hidden;
+        width: 100%;
+        max-width: 100vw;
+    }
+
     .sidebar {
         width: 100%;
         height: auto;
@@ -137,7 +143,22 @@
     .main-content {
         margin-left: 0;
         margin-bottom: 80px;
-        /* Space for bottom nav */
-        padding: 24px 16px;
+        padding: 16px;
+        overflow-x: hidden;
+        width: 100%;
+        max-width: 100vw;
+        box-sizing: border-box;
+    }
+}
+
+@media (max-width: 480px) {
+    .main-content {
+        padding: 12px 8px;
+        margin-bottom: 70px;
+    }
+
+    .nav-item {
+        font-size: 0.65rem;
+        padding: 6px 4px;
     }
 }
