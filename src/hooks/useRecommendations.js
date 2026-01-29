@@ -92,12 +92,19 @@ const useRecommendations = (apiKey, genres) => {
                 actorId = res.data.results[0]?.id || '';
             }
 
+            let directorId = '';
+            if (director.trim()) {
+                const res = await axios.get(`https://api.themoviedb.org/3/search/person?api_key=${apiKey}&query=${encodeURIComponent(director)}`);
+                directorId = res.data.results[0]?.id || '';
+            }
+
             // --- 2. Build Query Filters ---
             // Just building the base discovery URL params
             let queryParams = `sort_by=popularity.desc&include_adult=false&include_video=false&page=1`;
 
             if (genre) queryParams += `&with_genres=${genre}`;
             if (actorId) queryParams += `&with_cast=${actorId}`;
+            if (directorId) queryParams += `&with_crew=${directorId}`;
 
             if (decade) {
                 queryParams += `&primary_release_date.gte=${decade}-01-01&primary_release_date.lte=${parseInt(decade) + 9}-12-31`;
