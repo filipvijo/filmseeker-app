@@ -27,7 +27,7 @@ const fetchMoviePoster = async (title, year) => {
     }
 };
 
-// Parse GPT response into structured movie data
+// Parse AI response into structured movie data
 const parseMovieRecommendations = (text) => {
     const suggestions = [];
     const lines = text.split('\n').filter(line => line.trim());
@@ -83,44 +83,48 @@ const parseMovieRecommendations = (text) => {
     return suggestions;
 };
 
-export const askDrFilmBot = async (userPrompt, watchedFilms, personaConfig, apiKey) => {
-    if (!apiKey || !apiKey.startsWith('sk-')) {
-        console.error("Invalid API Key format");
-        throw new Error('Invalid OpenAI API key format. Must start with sk-');
-    }
-
+export const askDrFilmBot = async (userPrompt, watchedFilms, personaConfig, conversationHistory = []) => {
     try {
         const watchedTitles = watchedFilms.map(f => f.title).join(', ');
 
         let systemContent = personaConfig.systemPrompt;
         systemContent += `\n\nAdditional Rules:
     - You represent the "${personaConfig.name}" persona. Stay in character.
-    - Suggest exactly 5 films unless asked otherwise.
+    - ALWAYS respond with exactly 5 film recommendations. Never ask for clarification — interpret the user's request as best you can and recommend films immediately.
     - Format each film as: Title (Year) - Description - "Memorable Quote"
     - Number each recommendation (1., 2., etc.)
+    - Match the user's requested genre, country, mood, or style as closely as possible.
     - Do NOT recommend: ${watchedTitles}`;
 
-        const response = await axios.post(
-            'https://api.openai.com/v1/chat/completions',
-            {
-                model: 'gpt-4o-mini',
-                messages: [
-                    { role: 'system', content: systemContent },
-                    { role: 'user', content: userPrompt }
-                ],
-                max_tokens: 800,
-                temperature: 0.9,
-            },
-            {
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${apiKey}`,
-                },
+        // Build messages array with full conversation history
+        const messages = [
+            { role: 'system', content: systemContent },
+        ];
+
+        // Add previous conversation turns (skip the initial greeting)
+        for (const msg of conversationHistory) {
+            if (msg.role === 'user') {
+                messages.push({ role: 'user', content: msg.text });
+            } else if (msg.role === 'assistant' && !msg.isError) {
+                // Include the raw text or movie content so the model has context
+                const content = msg.rawContent || msg.text || '';
+                if (content) {
+                    messages.push({ role: 'assistant', content });
+                }
             }
-        );
+        }
+
+        // Add the current user message
+        messages.push({ role: 'user', content: userPrompt });
+
+        const response = await axios.post('/api/chat', {
+            messages,
+            max_tokens: 2048,
+            temperature: 0.9,
+        });
 
         const content = response.data.choices[0].message.content;
-        console.log('OpenAI raw response:', content);
+        console.log('Gemini raw response:', content);
 
         // Try to parse as movie recommendations
         const suggestions = parseMovieRecommendations(content);
@@ -151,10 +155,10 @@ export const askDrFilmBot = async (userPrompt, watchedFilms, personaConfig, apiK
     } catch (error) {
         console.error('AI Service Error:', error);
         if (error.response) {
-            console.error("OpenAI API Error Status:", error.response.status);
-            console.error("OpenAI API Error Data:", error.response.data);
+            console.error("API Error Status:", error.response.status);
+            console.error("API Error Data:", error.response.data);
             if (error.response.status === 401) {
-                throw new Error("Invalid API Key. Please check your .env file.");
+                throw new Error("Invalid API Key. Please check your server environment variables.");
             } else if (error.response.status === 429) {
                 throw new Error("Rate limit exceeded or insufficient quota.");
             }

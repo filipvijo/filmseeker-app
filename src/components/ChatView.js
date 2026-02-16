@@ -9,7 +9,6 @@ import { useFilm } from '../context/FilmContext';
 import './ChatView.css';
 
 const ChatView = () => {
-    const OPENAI_KEY = process.env.REACT_APP_OPENAI_API_KEY;
     const navigate = useNavigate();
     const { watchedFilms, toggleWatched, isWatched } = useFilm();
 
@@ -20,6 +19,7 @@ const ChatView = () => {
     const [loading, setLoading] = useState(false);
     const [selectedPersona, setSelectedPersona] = useState('dr_filmbot');
     const messagesEndRef = useRef(null);
+    const sendingRef = useRef(false);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -28,7 +28,8 @@ const ChatView = () => {
     useEffect(scrollToBottom, [messages]);
 
     const handleSend = async () => {
-        if (!input.trim() || loading) return;
+        if (!input.trim() || loading || sendingRef.current) return;
+        sendingRef.current = true;
 
         const userMsg = { id: Date.now(), role: 'user', text: input };
         setMessages(prev => [...prev, userMsg]);
@@ -37,7 +38,9 @@ const ChatView = () => {
 
         try {
             const persona = PERSONAS[selectedPersona];
-            const response = await askDrFilmBot(input, watchedFilms, persona, OPENAI_KEY);
+            // Pass conversation history (excluding the initial greeting) so the model has context
+            const history = messages.filter(m => m.id !== 1);
+            const response = await askDrFilmBot(input, watchedFilms, persona, history);
 
             const aiMsg = {
                 id: Date.now() + 1,
@@ -45,6 +48,7 @@ const ChatView = () => {
                 responseType: response.type,
                 movies: response.movies || [],
                 text: response.content || '',
+                rawContent: response.rawContent || response.content || '',
                 persona: selectedPersona
             };
             setMessages(prev => [...prev, aiMsg]);
@@ -57,6 +61,7 @@ const ChatView = () => {
             }]);
         } finally {
             setLoading(false);
+            sendingRef.current = false;
         }
     };
 
@@ -183,7 +188,7 @@ const ChatView = () => {
                         placeholder={`Ask ${PERSONAS[selectedPersona].name}...`}
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+                        onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                     />
                     <button onClick={handleSend} disabled={loading || !input.trim()}>
                         <Send size={20} />
