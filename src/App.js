@@ -1,4 +1,5 @@
 import React from 'react';
+import { Helmet } from 'react-helmet';
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import { FilmProvider, useFilm } from './context/FilmContext';
 import Layout from './components/Layout/Layout';
@@ -84,6 +85,13 @@ const AppContent = () => {
         <Routes>
           <Route path="/" element={
             <div className="page-container">
+              <Helmet>
+                <title>FilmSeeker - Find Your Next Favorite Movie</title>
+                <meta name="description" content="Discover your next favorite movie with FilmSeeker. Get personalized recommendations based on genre, duration, language, and more. Features AI chat, swipe matching with friends, and 31 language filters." />
+                <link rel="canonical" href="https://www.filmseeker.net/" />
+                <meta property="og:title" content="FilmSeeker - Find Your Next Favorite Movie" />
+                <meta property="og:url" content="https://www.filmseeker.net/" />
+              </Helmet>
               <header className="page-header" style={{ marginBottom: '40px' }}>
                 <h1 style={{
                   fontSize: '3rem',

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { motion } from 'framer-motion';
@@ -47,6 +48,18 @@ const FilmDetail = () => {
   if (loading) return <div className="loading-screen">Loading Cinema...</div>;
   if (!movie) return <div className="error-screen">Movie not found.</div>;
 
+  const year = movie.release_date?.split('-')[0];
+  const rawDescription = movie.overview || `${movie.title} (${year}) - Watch on FilmSeeker`;
+  const metaDescription = rawDescription.length > 155
+    ? rawDescription.substring(0, 152) + '...'
+    : rawDescription;
+  const ogImage = movie.backdrop_path
+    ? `https://image.tmdb.org/t/p/w780${movie.backdrop_path}`
+    : movie.poster_path
+      ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+      : 'https://www.filmseeker.net/logo512.png';
+  const movieUrl = `https://www.filmseeker.net/movie/${id}`;
+
   const trailer = videos.find(v => v.type === "Trailer" && v.site === "YouTube");
   const director = credits?.crew.find(p => p.job === "Director");
   const backdropUrl = `https://image.tmdb.org/t/p/original${movie.backdrop_path}`;
@@ -78,6 +91,21 @@ const FilmDetail = () => {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
+      <Helmet>
+        <title>{movie.title} ({year}) | FilmSeeker</title>
+        <meta name="description" content={metaDescription} />
+        <link rel="canonical" href={movieUrl} />
+        <meta property="og:type" content="video.movie" />
+        <meta property="og:title" content={`${movie.title} (${year})`} />
+        <meta property="og:description" content={metaDescription} />
+        <meta property="og:image" content={ogImage} />
+        <meta property="og:url" content={movieUrl} />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={`${movie.title} (${year})`} />
+        <meta name="twitter:description" content={metaDescription} />
+        <meta name="twitter:image" content={ogImage} />
+        <meta name="twitter:url" content={movieUrl} />
+      </Helmet>
       {/* Hero Backdrop */}
       <div className="detail-hero" style={{ backgroundImage: `url(${backdropUrl})` }}>
         <div className="hero-overlay"></div>

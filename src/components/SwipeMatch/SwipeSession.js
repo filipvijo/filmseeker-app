@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Helmet } from 'react-helmet';
 import { useNavigate } from 'react-router-dom';
 import { useFilm } from '../../context/FilmContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -94,6 +95,14 @@ const SwipeSession = () => {
 
     return (
         <div className="swipe-container">
+            <Helmet>
+                <title>Sync &amp; Swipe | FilmSeeker</title>
+                <meta name="description" content="Swipe through movie recommendations and build your perfect watchlist. Then share with a friend for Movie Match!" />
+                <link rel="canonical" href="https://www.filmseeker.net/swipe" />
+                <meta property="og:title" content="Sync & Swipe | FilmSeeker" />
+                <meta property="og:description" content="Swipe through movie recommendations and build your perfect watchlist. Then share with a friend for Movie Match!" />
+                <meta property="og:url" content="https://www.filmseeker.net/swipe" />
+            </Helmet>
             <h3 className="section-title">Swipe Mode</h3>
             <div className="card-stack">
                 <AnimatePresence>

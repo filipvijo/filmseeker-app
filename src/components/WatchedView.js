@@ -1,4 +1,5 @@
 import React from 'react';
+import { Helmet } from 'react-helmet';
 import { useNavigate } from 'react-router-dom';
 import { useFilm } from '../context/FilmContext';
 import { X, Film } from 'lucide-react';
@@ -34,6 +35,14 @@ const WatchedView = () => {
 
     return (
         <div className="watched-view">
+            <Helmet>
+                <title>Watched Films | FilmSeeker</title>
+                <meta name="description" content="Track all the movies you've watched. Your personal film diary on FilmSeeker." />
+                <link rel="canonical" href="https://www.filmseeker.net/watched" />
+                <meta property="og:title" content="Watched Films | FilmSeeker" />
+                <meta property="og:description" content="Track all the movies you've watched. Your personal film diary on FilmSeeker." />
+                <meta property="og:url" content="https://www.filmseeker.net/watched" />
+            </Helmet>
             <h2 className="section-title">Your Watched Films</h2>
             <p className="watched-count">{watchedFilms.length} film{watchedFilms.length !== 1 ? 's' : ''} watched</p>
             <div className="watched-grid">

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { Helmet } from 'react-helmet';
 import { useNavigate } from 'react-router-dom';
 import { askDrFilmBot } from '../services/aiService';
 import AIPersonaSelector, { PERSONAS } from './AIPersonaSelector/AIPersonaSelector';
@@ -83,6 +84,14 @@ const ChatView = () => {
 
     return (
         <div className="chat-container">
+            <Helmet>
+                <title>Dr. FilmBot - AI Film Concierge | FilmSeeker</title>
+                <meta name="description" content="Chat with Dr. FilmBot, your AI-powered film concierge. Get personalized movie recommendations through natural conversation." />
+                <link rel="canonical" href="https://www.filmseeker.net/chat" />
+                <meta property="og:title" content="Dr. FilmBot - AI Film Concierge | FilmSeeker" />
+                <meta property="og:description" content="Chat with Dr. FilmBot, your AI-powered film concierge. Get personalized movie recommendations through natural conversation." />
+                <meta property="og:url" content="https://www.filmseeker.net/chat" />
+            </Helmet>
             <div className="chat-hero">
                 <div className="bot-hero-avatar">
                     <img src={drFilmBotImg} alt="Dr. FilmBot" />
