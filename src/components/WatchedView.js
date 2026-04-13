@@ -52,10 +52,16 @@ const WatchedView = () => {
                         className="watched-card"
                         onClick={() => handleFilmClick(film.id)}
                     >
-                        {film.poster_path ? (
+                        {film.poster || film.Poster ? (
+                            <img
+                                src={film.poster || film.Poster}
+                                alt={film.title || film.Title}
+                                className="watched-poster"
+                            />
+                        ) : film.poster_path ? (
                             <img
                                 src={`https://image.tmdb.org/t/p/w300${film.poster_path}`}
-                                alt={film.title}
+                                alt={film.title || film.Title}
                                 className="watched-poster"
                             />
                         ) : (

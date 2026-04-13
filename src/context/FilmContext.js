@@ -1,6 +1,7 @@
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useMemo } from 'react';
 import useMovieData from '../hooks/useMovieData';
 import useRecommendations from '../hooks/useRecommendations';
+import { buildTasteProfile } from '../services/tasteProfile';
 
 const FilmContext = createContext();
 
@@ -25,11 +26,21 @@ export const FilmProvider = ({ children }) => {
         setWatchedFilms(prev => {
             const exists = prev.find(m => m.id === movie.id);
             if (exists) return prev.filter(m => m.id !== movie.id);
-            return [...prev, movie];
+            // Store genre_ids and release_date for taste profile
+            return [...prev, {
+                id: movie.id,
+                title: movie.title || movie.Title,
+                poster: movie.poster || movie.Poster || null,
+                genre_ids: movie.genre_ids || movie.genres?.map(g => g.id) || [],
+                release_date: movie.release_date || movie.year || null
+            }];
         });
     };
 
     const isWatched = (id) => watchedFilms.some(m => m.id === id);
+
+    // Compute taste profile from watched films
+    const tasteProfile = useMemo(() => buildTasteProfile(watchedFilms), [watchedFilms]);
 
     // Surprise Me Logic
     const getSurpriseFilm = async () => {
@@ -54,7 +65,8 @@ export const FilmProvider = ({ children }) => {
         watchedFilms,
         toggleWatched,
         isWatched,
-        getSurpriseFilm
+        getSurpriseFilm,
+        tasteProfile
     };
 
     return (

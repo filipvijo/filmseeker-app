@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { formatProfileForPrompt } from './tasteProfile';
 
 const TMDB_API_KEY = process.env.REACT_APP_TMDB_API_KEY;
 
@@ -83,7 +84,7 @@ const parseMovieRecommendations = (text) => {
     return suggestions;
 };
 
-export const askDrFilmBot = async (userPrompt, watchedFilms, personaConfig, conversationHistory = []) => {
+export const askDrFilmBot = async (userPrompt, watchedFilms, personaConfig, conversationHistory = [], tasteProfile = null) => {
     try {
         const watchedTitles = watchedFilms.map(f => f.title).join(', ');
 
@@ -95,6 +96,12 @@ export const askDrFilmBot = async (userPrompt, watchedFilms, personaConfig, conv
     - Number each recommendation (1., 2., etc.)
     - Match the user's requested genre, country, mood, or style as closely as possible.
     - Do NOT recommend: ${watchedTitles}`;
+
+        // Inject taste profile if available
+        const profileText = formatProfileForPrompt(tasteProfile);
+        if (profileText) {
+            systemContent += `\n\nUser Taste Profile:\n${profileText}`;
+        }
 
         // Build messages array with full conversation history
         const messages = [

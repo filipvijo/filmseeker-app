@@ -11,7 +11,7 @@ import './ChatView.css';
 
 const ChatView = () => {
     const navigate = useNavigate();
-    const { watchedFilms, toggleWatched, isWatched } = useFilm();
+    const { watchedFilms, toggleWatched, isWatched, tasteProfile } = useFilm();
 
     const [messages, setMessages] = useState([
         { id: 1, role: 'assistant', text: "Hello! I'm Dr. FilmBot. How can I help you find a movie today?", persona: 'dr_filmbot' }
@@ -41,7 +41,7 @@ const ChatView = () => {
             const persona = PERSONAS[selectedPersona];
             // Pass conversation history (excluding the initial greeting) so the model has context
             const history = messages.filter(m => m.id !== 1);
-            const response = await askDrFilmBot(input, watchedFilms, persona, history);
+            const response = await askDrFilmBot(input, watchedFilms, persona, history, tasteProfile);
 
             const aiMsg = {
                 id: Date.now() + 1,
