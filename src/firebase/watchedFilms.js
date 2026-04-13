@@ -23,7 +23,9 @@ export const addWatchedFilm = async (userId, film) => {
       userId,
       filmId: film.id,
       title: film.title || film.Title,
-      posterPath: film.poster_path || film.poster || (film.Poster ? film.Poster.replace('https://image.tmdb.org/t/p/w500', '') : null),
+      posterPath: film.poster_path || film.poster || (film.Poster ? film.Poster.replace('https://image.tmdb.org/t/p/w500', '').replace('https://image.tmdb.org/t/p/w300', '') : null),
+      genre_ids: film.genre_ids || film.genres?.map(g => g.id) || [],
+      release_date: film.release_date || film.year || null,
       addedAt: serverTimestamp(),
     };
     
