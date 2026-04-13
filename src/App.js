@@ -14,6 +14,7 @@ import WatchedView from './components/WatchedView';
 import FilmDetail from './FilmDetail';
 import TrendingSection from './components/TrendingSection/TrendingSection';
 import PreferencesFilter from './components/PreferencesFilter/PreferencesFilter';
+import Login from './Login';
 
 import './App.css';
 
@@ -118,6 +119,7 @@ const AppContent = () => {
           <Route path="/movie/:id" element={<FilmDetail />} />
           <Route path="/match" element={<MatchSession />} />
           <Route path="/match/:sessionId" element={<MatchSession />} />
+          <Route path="/login" element={<Login />} />
 
         </Routes>
       </Layout>

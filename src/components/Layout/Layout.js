@@ -1,11 +1,13 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Film, MessageSquare, Heart, Users, HeartHandshake } from 'lucide-react';
+import { Film, MessageSquare, Heart, Users, HeartHandshake, LogIn, LogOut, User } from 'lucide-react';
+import { useFilm } from '../../context/FilmContext';
 import './Layout.css';
-import logo from '../../logo.png'; // Assuming logo is in src/logo.png
+import logo from '../../logo.png';
 
 const Layout = ({ children }) => {
   const location = useLocation();
+  const { user, authLoading, handleLogout } = useFilm();
 
   const navItems = [
     { icon: Film, label: 'Recommendations', path: '/' },
@@ -13,7 +15,6 @@ const Layout = ({ children }) => {
     { icon: HeartHandshake, label: 'Movie Match', path: '/match' },
     { icon: Heart, label: 'Watched', path: '/watched' },
     { icon: MessageSquare, label: 'Dr. FilmBot', path: '/chat' },
-    // { icon: User, label: 'Profile', path: '/profile' }, // Future
   ];
 
   return (
@@ -44,6 +45,28 @@ const Layout = ({ children }) => {
         </div>
 
         <div className="sidebar-footer">
+          {!authLoading && (
+            user ? (
+              <div className="sidebar-user">
+                <div className="sidebar-user-info">
+                  {user.photoURL ? (
+                    <img src={user.photoURL} alt="" className="sidebar-user-avatar" />
+                  ) : (
+                    <User size={16} />
+                  )}
+                  <span className="sidebar-user-name">{user.displayName || user.email}</span>
+                </div>
+                <button className="sidebar-auth-btn" onClick={handleLogout} title="Sign out">
+                  <LogOut size={16} />
+                </button>
+              </div>
+            ) : (
+              <Link to="/login" className="sidebar-auth-btn sidebar-login-btn">
+                <LogIn size={16} />
+                <span>Sign In</span>
+              </Link>
+            )
+          )}
           <p className="copyright">© 2026 FilmSeeker</p>
         </div>
       </nav>
