@@ -5,7 +5,7 @@
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#1a2151" />
-    <meta name="description" content="Discover your next favorite movie with FilmSeeker. Get personalized recommendations based on genre, duration, language, and more. Features AI chat, swipe matching with friends, and 31 language filters." />
+    <meta name="description" content="FilmSeeker is a free movie discovery app. Filter by genre, language (31 available), duration, decade, actor, or director. Features AI chat recommendations and swipe matching with friends. No ads." />
     <meta name="keywords" content="movie recommendations, film finder, AI movie recommendations, personalized movies, film suggestions, movie match, film discovery, what to watch, movie night, film recommendations" />
     <meta name="author" content="FilmSeeker" />
     <meta name="application-name" content="FilmSeeker" />
@@ -85,6 +85,20 @@
     <link rel="preconnect" href="https://image.tmdb.org" />
     <link rel="preconnect" href="https://api.themoviedb.org" />
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <!-- FAQ JSON-LD for AI Answer Engine Optimization -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {"@type": "Question","name": "What is FilmSeeker?","acceptedAnswer": {"@type": "Answer","text": "FilmSeeker is a free movie discovery platform that helps you find your next favorite film through AI-powered recommendations, swipe matching with friends, and personalized filters including genre, duration, language (31 languages), decade, director, and actor."}},
+        {"@type": "Question","name": "How does FilmSeeker recommend movies?","acceptedAnswer": {"@type": "Answer","text": "FilmSeeker uses preference filters (genre, duration, language, decade, actor, director) and an AI chatbot called Dr. FilmBot to recommend movies. You can also swipe to match movies with friends, or hit Surprise Me for a random pick."}},
+        {"@type": "Question","name": "Is FilmSeeker free?","acceptedAnswer": {"@type": "Answer","text": "Yes, FilmSeeker is completely free. No subscriptions, no ads, no premium tiers."}},
+        {"@type": "Question","name": "What languages does FilmSeeker support?","acceptedAnswer": {"@type": "Answer","text": "FilmSeeker supports movie filtering in 31 languages including English, French, German, Spanish, Japanese, Korean, Arabic, Hindi, Portuguese, Chinese, Russian, and more."}},
+        {"@type": "Question","name": "What is Dr. FilmBot?","acceptedAnswer": {"@type": "Answer","text": "Dr. FilmBot is FilmSeeker's AI chatbot. Describe what kind of movie you're in the mood for, and it suggests films using natural language."}}
+      ]
+    }
+    </script>
     <title>FilmSeeker - Find Your Next Favorite Movie</title>
   </head>
   <body>
