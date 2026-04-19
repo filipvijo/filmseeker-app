@@ -12,11 +12,13 @@
     "firebase": "^11.4.0",
     "framer-motion": "^12.29.2",
     "lucide-react": "^0.563.0",
+    "puppeteer": "^24.41.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-helmet": "^6.1.0",
     "react-router-dom": "^7.3.0",
     "react-scripts": "^5.0.1",
+    "react-snap": "^1.23.0",
     "vercel": "^41.4.1",
     "web-vitals": "^2.1.4",
     "yocto-queue": "^1.2.0"
@@ -24,8 +26,28 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
+    "postbuild": "react-snap",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
+  },
+  "reactSnap": {
+    "source": "build",
+    "minifyHtml": {
+      "collapseWhitespace": true,
+      "removeComments": true
+    },
+    "puppeteerArgs": [
+      "--no-sandbox",
+      "--disable-setuid-sandbox"
+    ],
+    "puppeteerExecutablePath": "/home/filip/.cache/puppeteer/chrome/linux-147.0.7727.56/chrome-linux64/chrome",
+    "routes": [
+      "/",
+      "/swipe",
+      "/chat",
+      "/watched",
+      "/match"
+    ]
   },
   "eslintConfig": {
     "extends": [
