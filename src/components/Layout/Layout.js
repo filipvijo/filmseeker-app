@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Film, MessageSquare, Heart, Users, HeartHandshake, LogIn, LogOut, User } from 'lucide-react';
+import { Film, MessageSquare, Heart, Users, HeartHandshake, LogIn, LogOut, User, Menu, X } from 'lucide-react';
 import { useFilm } from '../../context/FilmContext';
 import './Layout.css';
 import logo from '../../logo.png';
@@ -8,6 +8,8 @@ import logo from '../../logo.png';
 const Layout = ({ children }) => {
   const location = useLocation();
   const { user, authLoading, handleLogout } = useFilm();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
 
   const navItems = [
     { icon: Film, label: 'Recommendations', path: '/' },
@@ -17,9 +19,42 @@ const Layout = ({ children }) => {
     { icon: MessageSquare, label: 'Dr. FilmBot', path: '/chat' },
   ];
 
+  // Close menu on route change
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [location.pathname]);
+
+  // Close menu on outside tap
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuOpen && menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [menuOpen]);
+
   return (
     <div className="app-layout">
-      <nav className="sidebar">
+      {/* Mobile hamburger button */}
+      <button 
+        className="mobile-menu-btn" 
+        onClick={() => setMenuOpen(!menuOpen)}
+        aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+      >
+        {menuOpen ? <X size={24} /> : <Menu size={24} />}
+      </button>
+
+      {/* Overlay */}
+      <div className={`menu-overlay ${menuOpen ? 'open' : ''}`} onClick={() => setMenuOpen(false)} />
+
+      {/* Sidebar */}
+      <nav className={`sidebar ${menuOpen ? 'mobile-open' : ''}`} ref={menuRef}>
         <div className="sidebar-header">
           <img src={logo} alt="FilmSeeker" className="sidebar-logo" />
           <span className="sidebar-brand">FilmSeeker</span>
