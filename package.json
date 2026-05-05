@@ -26,7 +26,7 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "postbuild": "if [ \"$VERCEL\" = \"1\" ]; then echo 'Skipping react-snap on Vercel'; else react-snap; fi",
+    "postbuild": "node scripts/run-react-snap.js",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
@@ -40,7 +40,6 @@
       "--no-sandbox",
       "--disable-setuid-sandbox"
     ],
-    "puppeteerExecutablePath": "/home/filip/.cache/puppeteer/chrome/linux-147.0.7727.56/chrome-linux64/chrome",
     "routes": [
       "/",
       "/swipe",

@@ -7,9 +7,10 @@ import reportWebVitals from './reportWebVitals';
 import ErrorBoundary from './components/ErrorBoundary';
 
 const rootElement = document.getElementById('root');
+const fallbackElement = document.getElementById('seo-fallback');
 
-if (rootElement.hasChildNodes()) {
-  // Pre-rendered by react-snap — hydrate instead of re-render
+if (rootElement.hasChildNodes() && !fallbackElement) {
+  // Pre-rendered by react-snap - hydrate instead of re-render.
   hydrateRoot(
     rootElement,
     <React.StrictMode>
@@ -19,7 +20,10 @@ if (rootElement.hasChildNodes()) {
     </React.StrictMode>
   );
 } else {
-  // Normal client-side render
+  if (fallbackElement) {
+    rootElement.textContent = '';
+  }
+
   const root = createRoot(rootElement);
   root.render(
     <React.StrictMode>

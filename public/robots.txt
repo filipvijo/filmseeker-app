@@ -3,7 +3,7 @@ Allow: /
 
 Sitemap: https://www.filmseeker.net/sitemap.xml
 
-# AI Answer Engines — allow indexing for AEO visibility
+# AI Answer Engines - allow indexing for AEO visibility
 User-agent: GPTBot
 Allow: /
 
