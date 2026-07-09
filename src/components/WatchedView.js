@@ -1,6 +1,6 @@
 import React from 'react';
 import { Helmet } from 'react-helmet';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useFilm } from '../context/FilmContext';
 import { X, Film } from 'lucide-react';
 import './WatchedView.css';
@@ -24,10 +24,14 @@ const WatchedView = () => {
                 <h2 className="section-title">Your Watched Films</h2>
                 <div className="watched-empty-state">
                     <Film size={48} strokeWidth={1.5} />
-                    <p>No films marked as watched yet.</p>
+                    <p>Your taste profile starts here.</p>
                     <p className="watched-empty-hint">
-                        When you watch a film, click "Mark Watched" on the film detail page to add it here.
+                        Mark films as watched and FilmSeeker will learn what you actually like — not just what is trending.
                     </p>
+                    <div className="watched-empty-actions">
+                        <Link to="/" className="watched-empty-btn primary">Explore recommendations</Link>
+                        <Link to="/movie/840326" className="watched-empty-btn">Start with this month’s pick</Link>
+                    </div>
                 </div>
             </div>
         );

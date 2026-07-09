@@ -259,12 +259,17 @@ const MatchSession = () => {
                 <div className="match-icon-container">
                     <Users size={64} color="#00E5FF" />
                 </div>
-                <h2>{mode === 'create' ? 'Movie Match' : `${session?.userA?.name || 'Someone'} invited you!`}</h2>
+                <h2>{mode === 'create' ? 'Match with Friend' : `${session?.userA?.name || 'Someone'} invited you!`}</h2>
                 <p className="match-description">
                     {mode === 'create'
-                        ? 'Swipe on movies, then share with a friend to find your perfect movie night pick!'
+                        ? 'Movie night without negotiation. Swipe separately, then FilmSeeker finds the overlap.'
                         : 'Swipe on the same movies and see what you both want to watch!'}
                 </p>
+                {mode === 'create' && (
+                    <p className="match-description match-description-secondary">
+                        You pick what you would watch. Send the link. Your friend does the same. Only mutual yeses survive.
+                    </p>
+                )}
 
                 <div className="name-input-container">
                     <input

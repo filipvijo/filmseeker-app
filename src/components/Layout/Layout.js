@@ -10,9 +10,9 @@ const Layout = ({ children }) => {
   const { user, authLoading, handleLogout } = useFilm();
 
   const navItems = [
-    { icon: Film, label: 'Recommendations', path: '/' },
-    { icon: Users, label: 'Sync & Swipe', path: '/swipe' },
-    { icon: HeartHandshake, label: 'Movie Match', path: '/match' },
+    { icon: Film, label: 'Discover', path: '/' },
+    { icon: Users, label: 'Swipe Picks', path: '/swipe' },
+    { icon: HeartHandshake, label: 'Match Friend', path: '/match' },
     { icon: Heart, label: 'Watched', path: '/watched' },
     { icon: MessageSquare, label: 'Dr. FilmBot', path: '/chat' },
   ];
