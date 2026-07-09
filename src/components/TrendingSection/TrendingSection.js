@@ -1,12 +1,30 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useFilm } from '../../context/FilmContext';
 import { motion } from 'framer-motion';
-import { Star, Play, Calendar } from 'lucide-react';
+import { Star, Play, Calendar, Share2, Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import './TrendingSection.css';
+import { getFilmOfMonthEditorial } from '../../data/filmOfMonthEditorial';
 
 const TrendingSection = () => {
     const { trendingFilms, movieOfTheMonthDetails: fotm } = useFilm();
+    const [copied, setCopied] = useState(false);
+    const editorial = getFilmOfMonthEditorial(fotm);
+
+    const shareFilmOfMonth = async () => {
+        if (!fotm) return;
+        const shareUrl = `${window.location.origin}/movie/${fotm.id}`;
+        const shareText = `FilmSeeker's Film of the Month: ${fotm.title}`;
+
+        if (navigator.share) {
+            await navigator.share({ title: shareText, text: shareText, url: shareUrl });
+            return;
+        }
+
+        await navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
+        setCopied(true);
+        window.setTimeout(() => setCopied(false), 1800);
+    };
 
     return (
         <div className="trending-section">
@@ -18,7 +36,7 @@ const TrendingSection = () => {
                     animate={{ opacity: 1, y: 0 }}
                     className="fotm-hero"
                     style={{
-                        backgroundImage: `linear-gradient(to top, #1a2151 10%, transparent 90%), url(https://image.tmdb.org/t/p/original${fotm.backdrop_path || fotm.poster_path})`
+                        backgroundImage: `linear-gradient(90deg, rgba(5, 10, 28, 0.94) 0%, rgba(5, 10, 28, 0.78) 48%, rgba(5, 10, 28, 0.38) 100%), url(https://image.tmdb.org/t/p/original${fotm.backdrop_path || fotm.poster_path})`
                     }}
                 >
                     <div className="fotm-content">
@@ -31,9 +49,43 @@ const TrendingSection = () => {
                             <span><Calendar size={16} /> {fotm.release_date?.split('-')[0]}</span>
                         </div>
 
-                        <Link to={`/movie/${fotm.id}`} className="hero-btn">
-                            <Play size={20} fill="currentColor" /> Watch Details
-                        </Link>
+                        {editorial && (
+                            <div className="fotm-editorial">
+                                <article>
+                                    <span>Why we picked it</span>
+                                    <p>{editorial.whyPicked}</p>
+                                </article>
+                                <article>
+                                    <span>Best watched when</span>
+                                    <p>{editorial.bestWatchedWhen}</p>
+                                </article>
+                                <article>
+                                    <span>If you liked</span>
+                                    <p>{editorial.ifYouLiked.join(' · ')}</p>
+                                </article>
+                            </div>
+                        )}
+
+                        {fotm.trailerKey && (
+                            <div className="fotm-trailer-embed" aria-label={`${fotm.title} trailer`}>
+                                <iframe
+                                    src={`https://www.youtube-nocookie.com/embed/${fotm.trailerKey}`}
+                                    title={`${fotm.title} trailer`}
+                                    loading="lazy"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                    allowFullScreen
+                                />
+                            </div>
+                        )}
+
+                        <div className="fotm-actions">
+                            <Link to={`/movie/${fotm.id}`} className="hero-btn">
+                                <Play size={20} fill="currentColor" /> Watch Details
+                            </Link>
+                            <button type="button" className="hero-btn hero-btn-secondary" onClick={shareFilmOfMonth}>
+                                {copied ? <Check size={18} /> : <Share2 size={18} />} {copied ? 'Copied' : 'Share Pick'}
+                            </button>
+                        </div>
                     </div>
                 </motion.div>
             )}

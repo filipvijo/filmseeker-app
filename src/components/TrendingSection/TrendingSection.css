@@ -8,7 +8,7 @@
 /* Film of the Month Hero */
 .fotm-hero {
     position: relative;
-    height: 400px;
+    min-height: 560px;
     border-radius: 24px;
     background-size: cover;
     background-position: center;
@@ -64,6 +64,63 @@
     gap: 6px;
 }
 
+.fotm-editorial {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    max-width: 980px;
+    margin: 4px 0 18px;
+}
+
+.fotm-editorial article {
+    padding: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 16px;
+    background: rgba(5, 10, 28, 0.62);
+    backdrop-filter: blur(10px);
+}
+
+.fotm-editorial span {
+    display: block;
+    color: var(--color-primary);
+    font-size: 0.76rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+}
+
+.fotm-editorial p {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.92rem;
+    line-height: 1.45;
+}
+
+.fotm-trailer-embed {
+    width: min(420px, 100%);
+    aspect-ratio: 16 / 9;
+    margin: 0 0 18px;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.42);
+    background: rgba(0, 0, 0, 0.35);
+}
+
+.fotm-trailer-embed iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
+}
+
+.fotm-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
 .hero-btn {
     background: #fff;
     color: #000;
@@ -79,6 +136,13 @@
 
 .hero-btn:hover {
     transform: scale(1.05);
+}
+
+.hero-btn-secondary {
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    cursor: pointer;
 }
 
 /* Trending List */
@@ -148,12 +212,33 @@
 }
 
 @media (max-width: 768px) {
+    .fotm-hero {
+        min-height: 760px;
+        align-items: flex-end;
+    }
+
     .fotm-hero h2 {
         font-size: 2rem;
     }
 
     .fotm-content {
         padding: 20px;
+    }
+
+    .fotm-editorial {
+        grid-template-columns: 1fr;
+    }
+
+    .fotm-trailer-embed {
+        width: 100%;
+    }
+
+    .fotm-actions {
+        flex-direction: column;
+    }
+
+    .fotm-actions .hero-btn {
+        justify-content: center;
     }
 
     .trending-idx {
