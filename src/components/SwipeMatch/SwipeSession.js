@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet';
 import { useNavigate } from 'react-router-dom';
 import { useFilm } from '../../context/FilmContext';
@@ -7,22 +7,27 @@ import { Check, X, Users, RefreshCw } from 'lucide-react';
 import './SwipeMatch.css';
 
 const SwipeSession = () => {
-    const { getRecommendations, recommendations, isLoading } = useFilm();
+    const { getRecommendations, recommendations, isSearching, searchError } = useFilm();
     const navigate = useNavigate();
     const [stack, setStack] = useState([]);
     const [matches, setMatches] = useState([]);
     const [direction, setDirection] = useState(null);
     const [currentIndex, setCurrentIndex] = useState(0);
+    const [hasStarted, setHasStarted] = useState(false);
+    const initialRequestStarted = useRef(false);
 
-    // Initial load
+    // Initial load: request once only. Avoid the empty-stack -> finished-state loop.
     useEffect(() => {
         if (recommendations.length > 0) {
             setStack(recommendations);
             setCurrentIndex(0);
-        } else if (stack.length === 0 && !isLoading) {
+            setHasStarted(true);
+        } else if (!initialRequestStarted.current) {
+            initialRequestStarted.current = true;
+            setHasStarted(true);
             getRecommendations();
         }
-    }, [recommendations, getRecommendations, isLoading, stack.length]);
+    }, [recommendations, getRecommendations]);
 
     const handleSwipe = (dir) => {
         if (direction) return; // Prevent double swipe
@@ -42,18 +47,34 @@ const SwipeSession = () => {
     };
 
     const startSession = () => {
+        setHasStarted(true);
+        setStack([]);
+        setMatches([]);
+        setCurrentIndex(0);
         getRecommendations();
     };
 
-    const isFinished = currentIndex >= stack.length;
+    const isFinished = stack.length > 0 && currentIndex >= stack.length;
 
     // Loading State
-    if (stack.length === 0 && !isFinished && isLoading) {
+    if (stack.length === 0 && !isFinished && (isSearching || (hasStarted && !searchError))) {
         return <div className="swipe-intro"><h2>Loading Films...</h2></div>;
     }
 
+    // Error State
+    if (stack.length === 0 && searchError) {
+        return (
+            <div className="swipe-intro">
+                <div className="swipe-icon-container"><Users size={64} color="#00E5FF" /></div>
+                <h2>Couldn’t load movies</h2>
+                <p className="match-description">{searchError}</p>
+                <button className="start-btn" onClick={startSession}>Try Again</button>
+            </div>
+        );
+    }
+
     // Intro State
-    if (stack.length === 0 && !isFinished && !isLoading) {
+    if (stack.length === 0 && !isFinished && !isSearching) {
         return (
             <div className="swipe-intro">
                 <div className="swipe-icon-container"><Users size={64} color="#00E5FF" /></div>
@@ -81,7 +102,7 @@ const SwipeSession = () => {
                         </div>
                     ))}
                 </div>
-                <button className="restart-btn" onClick={() => { setMatches([]); setCurrentIndex(0); startSession(); }}>
+                <button className="restart-btn" onClick={startSession}>
                     <RefreshCw size={16} /> Play Again
                 </button>
             </div>

@@ -2742,3 +2742,62 @@ input:focus, select:focus {
     white-space: nowrap;
   }
 }
+
+.search-trigger {
+  margin: 32px 0 48px;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+/* Mobile polish pass: keep FilmSeeker's visual identity, reduce oversized desktop scale. */
+@media (max-width: 768px) {
+  .page-container {
+    padding-inline: 4px;
+  }
+
+  .page-header {
+    margin-bottom: 24px !important;
+  }
+
+  .page-header h1 {
+    font-size: clamp(2rem, 10vw, 2.55rem) !important;
+    line-height: 1.05;
+    margin-bottom: 10px !important;
+  }
+
+  .page-header .subtitle {
+    font-size: 1rem !important;
+    line-height: 1.45;
+  }
+
+  .movie-of-the-month-container {
+    gap: 16px;
+    padding: 12px;
+  }
+
+  .movie-of-the-month-poster {
+    width: min(72vw, 280px);
+    border-width: 3px;
+  }
+
+  .search-trigger {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    margin: 24px 8px 36px;
+  }
+
+  .search-trigger button {
+    width: 100%;
+    max-width: 340px;
+    align-self: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .movie-of-the-month-poster {
+    width: min(68vw, 240px);
+  }
+}

@@ -3,11 +3,11 @@ import { useFilm } from '../../context/FilmContext';
 import './PreferencesFilter.css';
 
 // Custom icons
-import iconLength from '../../icon-length.png';
-import iconMood from '../../icon-mood.png';
-import iconLanguage from '../../icon-language.png';
-import iconActor from '../../icon-actor.png';
-import iconDirector from '../../icon-director.png';
+import iconLength from '../../icon-length.webp';
+import iconMood from '../../icon-mood.webp';
+import iconLanguage from '../../icon-language.webp';
+import iconActor from '../../icon-actor.webp';
+import iconDirector from '../../icon-director.webp';
 
 const PreferencesFilter = () => {
     const { preferences, updatePreference } = useFilm();
@@ -20,7 +20,7 @@ const PreferencesFilter = () => {
 
                 {/* Duration */}
                 <div className="preference-item">
-                    <div className="pref-icon"><img src={iconLength} alt="Duration" /></div>
+                    <div className="pref-icon"><img src={iconLength} alt="Duration" loading="lazy" decoding="async" /></div>
                     <label>Duration</label>
                     <select
                         value={preferences.duration}
@@ -35,7 +35,7 @@ const PreferencesFilter = () => {
 
                 {/* Decade */}
                 <div className="preference-item">
-                    <div className="pref-icon"><img src={iconMood} alt="Decade" /></div>
+                    <div className="pref-icon"><img src={iconMood} alt="Decade" loading="lazy" decoding="async" /></div>
                     <label>Decade</label>
                     <select
                         value={preferences.decade}
@@ -55,7 +55,7 @@ const PreferencesFilter = () => {
 
                 {/* Language */}
                 <div className="preference-item">
-                    <div className="pref-icon"><img src={iconLanguage} alt="Language" /></div>
+                    <div className="pref-icon"><img src={iconLanguage} alt="Language" loading="lazy" decoding="async" /></div>
                     <label>Language</label>
                     <select
                         value={preferences.language}
@@ -98,7 +98,7 @@ const PreferencesFilter = () => {
 
                 {/* Actor */}
                 <div className="preference-item">
-                    <div className="pref-icon"><img src={iconActor} alt="Actor" /></div>
+                    <div className="pref-icon"><img src={iconActor} alt="Actor" loading="lazy" decoding="async" /></div>
                     <label>Actress/Actor</label>
                     <input
                         type="text"
@@ -110,7 +110,7 @@ const PreferencesFilter = () => {
 
                 {/* Director */}
                 <div className="preference-item">
-                    <div className="pref-icon"><img src={iconDirector} alt="Director" /></div>
+                    <div className="pref-icon"><img src={iconDirector} alt="Director" loading="lazy" decoding="async" /></div>
                     <label>Director</label>
                     <input
                         type="text"

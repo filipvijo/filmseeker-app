@@ -99,8 +99,8 @@ const useRecommendations = (apiKey, genres) => {
             }
 
             // --- 2. Build Query Filters ---
-            // Just building the base discovery URL params
-            let queryParams = `sort_by=popularity.desc&include_adult=false&include_video=false&page=1`;
+            // Keep pagination out of the shared query string; each request appends its own page.
+            let queryParams = `sort_by=popularity.desc&include_adult=false&include_video=false`;
 
             if (genre) queryParams += `&with_genres=${genre}`;
             if (actorId) queryParams += `&with_cast=${actorId}`;

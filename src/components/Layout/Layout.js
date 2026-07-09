@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Film, MessageSquare, Heart, Users, HeartHandshake, LogIn, LogOut, User } from 'lucide-react';
 import { useFilm } from '../../context/FilmContext';
 import './Layout.css';
-import logo from '../../logo.png';
+import logo from '../../logo.webp';
 
 const Layout = ({ children }) => {
   const location = useLocation();

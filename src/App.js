@@ -31,7 +31,7 @@ const SearchTrigger = () => {
   };
 
   return (
-    <div style={{ margin: '32px 0 48px', textAlign: 'center', display: 'flex', justifyContent: 'center', gap: '20px' }}>
+    <div className="search-trigger">
       <button
         onClick={() => getRecommendations()}
         disabled={isSearching}

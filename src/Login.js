@@ -7,7 +7,7 @@ import {
   sendPasswordResetEmail
 } from 'firebase/auth';
 import './App.css';
-import logo from './logo.png';
+import logo from './logo.webp';
 
 const Login = () => {
   const [email, setEmail] = useState('');
