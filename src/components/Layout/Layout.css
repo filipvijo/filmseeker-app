@@ -219,3 +219,9 @@
         padding: 6px 4px;
     }
 }
+.nav-label-short { display: none; }
+@media (max-width: 768px) {
+  .nav-label-full { display: none; }
+  .nav-label-short { display: inline; }
+  .nav-item { flex: 1; min-width: 0; min-height: 48px; justify-content: center; box-sizing: border-box; }
+}

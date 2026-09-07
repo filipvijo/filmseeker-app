@@ -1,0 +1,53 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": "npm run build",
+  "outputDirectory": "build",
+  "routes": [
+    {
+      "src": "/(.+)/",
+      "headers": {
+        "Location": "/$1"
+      },
+      "status": 308
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/(tonight|chat|match|watched|login|movie-guides)",
+      "dest": "/$1/index.html"
+    },
+    {
+      "src": "/movie-guides/(thrillers-under-90-minutes|movies-like-school-ties|movies-to-watch-with-your-partner)",
+      "dest": "/movie-guides/$1/index.html"
+    },
+    {
+      "src": "/movie/(14684|104|1817|1580|486947|207|9475|711|17187|445571|587792|76|371645)",
+      "dest": "/movie/$1/index.html"
+    },
+    {
+      "src": "/movie/([0-9]+)",
+      "dest": "/movie-shell.html"
+    },
+    {
+      "src": "/swipe",
+      "dest": "/session-shell.html",
+      "headers": {
+        "X-Robots-Tag": "noindex, follow"
+      }
+    },
+    {
+      "src": "/match/[^/]+",
+      "dest": "/session-shell.html",
+      "headers": {
+        "X-Robots-Tag": "noindex, follow"
+      }
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/404.html",
+      "status": 404
+    }
+  ]
+}

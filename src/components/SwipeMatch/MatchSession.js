@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Helmet } from 'react-helmet';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useFilm } from '../../context/FilmContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -248,18 +247,10 @@ const MatchSession = () => {
     if (showNameInput) {
         return (
             <div className="match-intro">
-                <Helmet>
-                    <title>Movie Match | FilmSeeker</title>
-                    <meta name="description" content="Swipe on movies with a friend and discover what you both want to watch together. Perfect for movie night!" />
-                    <link rel="canonical" href="https://www.filmseeker.net/match" />
-                    <meta property="og:title" content="Movie Match | FilmSeeker" />
-                    <meta property="og:description" content="Swipe on movies with a friend and discover what you both want to watch together. Perfect for movie night!" />
-                    <meta property="og:url" content="https://www.filmseeker.net/match" />
-                </Helmet>
                 <div className="match-icon-container">
                     <Users size={64} color="#00E5FF" />
                 </div>
-                <h2>{mode === 'create' ? 'Match with Friend' : `${session?.userA?.name || 'Someone'} invited you!`}</h2>
+                <h1>{mode === 'create' ? 'Find a movie you both want to watch' : `${session?.userA?.name || 'Someone'} invited you!`}</h1>
                 <p className="match-description">
                     {mode === 'create'
                         ? 'Movie night without negotiation. Swipe separately, then FilmSeeker finds the overlap.'
@@ -298,13 +289,6 @@ const MatchSession = () => {
 
     return (
         <div className="swipe-container">
-            <Helmet>
-                <title>Movie Match | FilmSeeker</title>
-                <meta name="description" content="Swipe on movies with a friend and discover what you both want to watch together. Perfect for movie night!" />
-                <link rel="canonical" href="https://www.filmseeker.net/match" />
-                <meta property="og:title" content="Movie Match | FilmSeeker" />
-                <meta property="og:url" content="https://www.filmseeker.net/match" />
-            </Helmet>
             <h3 className="section-title">
                 {mode === 'create' ? 'Pick Your Movies' : `Matching with ${session?.userA?.name}`}
             </h3>

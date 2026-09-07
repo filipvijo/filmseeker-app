@@ -1,5 +1,4 @@
 import React from 'react';
-import { Helmet } from 'react-helmet';
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import { FilmProvider, useFilm } from './context/FilmContext';
 import Layout from './components/Layout/Layout';
@@ -18,6 +17,8 @@ import PreferencesFilter from './components/PreferencesFilter/PreferencesFilter'
 import Login from './Login';
 
 import './App.css';
+import { RouteSeo } from './components/Seo';
+import { GuideLinks, GuideIndex, MovieGuide, NotFound } from './components/MovieGuides';
 
 // Search Button Component
 const SearchTrigger = () => {
@@ -83,20 +84,14 @@ const SearchTrigger = () => {
 const AppContent = () => {
   return (
     <Router>
+      <RouteSeo />
       <Layout>
         <Routes>
           <Route path="/" element={
-            <div className="page-container">
-              <Helmet>
-                <title>FilmSeeker - Find Your Next Favorite Movie</title>
-                <meta name="description" content="Discover your next favorite movie with FilmSeeker. Get personalized recommendations based on genre, duration, language, and more. Features AI chat, swipe matching with friends, and 31 language filters." />
-                <link rel="canonical" href="https://www.filmseeker.net/" />
-                <meta property="og:title" content="FilmSeeker - Find Your Next Favorite Movie" />
-                <meta property="og:url" content="https://www.filmseeker.net/" />
-              </Helmet>
+            <div className="page-container" data-page-ready="true">
               <header className="page-header" style={{ marginBottom: '40px' }}>
                 <h1 style={{
-                  fontSize: '3rem',
+                  fontSize: 'clamp(2rem, 4.4vw, 3.6rem)',
                   background: 'linear-gradient(to right, #fff, #94a3b8)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
@@ -107,14 +102,15 @@ const AppContent = () => {
                 </p>
               </header>
               <TrendingSection />
-              <TonightMode />
               <PreferencesFilter />
               <VisualFilter />
               <SearchTrigger />
               <BentoGrid />
+              <GuideLinks />
             </div>
           } />
 
+          <Route path="/tonight" element={<TonightMode />} />
           <Route path="/swipe" element={<SwipeSession />} />
           <Route path="/chat" element={<ChatView />} />
           <Route path="/watched" element={<WatchedView />} />
@@ -122,6 +118,9 @@ const AppContent = () => {
           <Route path="/match" element={<MatchSession />} />
           <Route path="/match/:sessionId" element={<MatchSession />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/movie-guides" element={<GuideIndex />} />
+          <Route path="/movie-guides/:slug" element={<MovieGuide />} />
+          <Route path="*" element={<NotFound />} />
 
         </Routes>
       </Layout>
