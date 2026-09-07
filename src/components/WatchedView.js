@@ -1,5 +1,4 @@
 import React from 'react';
-import { Helmet } from 'react-helmet';
 import { Link, useNavigate } from 'react-router-dom';
 import { useFilm } from '../context/FilmContext';
 import { X, Film } from 'lucide-react';
@@ -21,7 +20,7 @@ const WatchedView = () => {
     if (!watchedFilms || watchedFilms.length === 0) {
         return (
             <div className="watched-view">
-                <h2 className="section-title">Your Watched Films</h2>
+                <h1 className="section-title">Your Watched Films</h1>
                 <div className="watched-empty-state">
                     <Film size={48} strokeWidth={1.5} />
                     <p>Your taste profile starts here.</p>
@@ -30,7 +29,7 @@ const WatchedView = () => {
                     </p>
                     <div className="watched-empty-actions">
                         <Link to="/" className="watched-empty-btn primary">Explore recommendations</Link>
-                        <Link to="/movie/840326" className="watched-empty-btn">Start with this month’s pick</Link>
+                        <Link to="/movie-guides/movies-like-school-ties" className="watched-empty-btn">Explore films like School Ties</Link>
                     </div>
                 </div>
             </div>
@@ -39,15 +38,7 @@ const WatchedView = () => {
 
     return (
         <div className="watched-view">
-            <Helmet>
-                <title>Watched Films | FilmSeeker</title>
-                <meta name="description" content="Track all the movies you've watched. Your personal film diary on FilmSeeker." />
-                <link rel="canonical" href="https://www.filmseeker.net/watched" />
-                <meta property="og:title" content="Watched Films | FilmSeeker" />
-                <meta property="og:description" content="Track all the movies you've watched. Your personal film diary on FilmSeeker." />
-                <meta property="og:url" content="https://www.filmseeker.net/watched" />
-            </Helmet>
-            <h2 className="section-title">Your Watched Films</h2>
+            <h1 className="section-title">Your Watched Films</h1>
             <p className="watched-count">{watchedFilms.length} film{watchedFilms.length !== 1 ? 's' : ''} watched</p>
             <div className="watched-grid">
                 {watchedFilms.map((film) => (

@@ -563,3 +563,7 @@
         padding: 8px 10px;
     }
 }
+/* The introduction and conversation both remain reachable on short screens. */
+.chat-container { height: auto; min-height: calc(100vh - 100px); overflow: visible; }
+.chat-window { flex: none; height: 560px; min-height: 360px; }
+@media (max-width: 600px) { .chat-window { height: 65vh; min-height: 360px; } }

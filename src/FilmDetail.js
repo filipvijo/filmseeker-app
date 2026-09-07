@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Helmet } from 'react-helmet';
-import { useParams, useNavigate } from 'react-router-dom';
+import Seo from './components/Seo';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import guides from './data/movieGuides.json';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Clock, Calendar, Star, Play, User as UserIcon, Check, Share2, Twitter, Facebook as FacebookIcon, Instagram as InstagramIcon } from 'lucide-react';
@@ -16,37 +17,46 @@ const FilmDetail = () => {
   const [videos, setVideos] = useState([]);
   const [providers, setProviders] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
 
   const watched = movie ? isWatched(movie.id) : false;
 
   useEffect(() => {
+    const controller = new AbortController();
+    setLoading(true);
+    setMovie(null);
+    setCredits(null);
+    setVideos([]);
+    setProviders(null);
+    setLoadError(null);
     const fetchDetails = async () => {
       try {
-        const [movieRes, creditsRes, videosRes, providersRes] = await Promise.all([
-          axios.get(`https://api.themoviedb.org/3/movie/${id}?api_key=${apiKey}`),
-          axios.get(`https://api.themoviedb.org/3/movie/${id}/credits?api_key=${apiKey}`),
-          axios.get(`https://api.themoviedb.org/3/movie/${id}/videos?api_key=${apiKey}`),
-          axios.get(`https://api.themoviedb.org/3/movie/${id}/watch/providers?api_key=${apiKey}`)
-        ]);
-
-        setMovie(movieRes.data);
-        setCredits(creditsRes.data);
-        setVideos(videosRes.data.results);
-        // Get providers with the JustWatch link
-        const providerData = providersRes.data.results.US || providersRes.data.results.GB;
-        setProviders(providerData);
-        setLoading(false);
+        const movieRes = await axios.get(`https://api.themoviedb.org/3/movie/${id}`, {
+          params: { api_key: apiKey, append_to_response: 'credits,videos,watch/providers' },
+          timeout: 15000, signal: controller.signal
+        });
+        const data = movieRes.data;
+        setMovie(data);
+        setCredits(data.credits || null);
+        setVideos(data.videos?.results || []);
+        const regions = data['watch/providers']?.results || {};
+        setProviders(regions.US ? { ...regions.US, region: 'United States' } : regions.GB ? { ...regions.GB, region: 'United Kingdom' } : null);
       } catch (err) {
-        console.error("Failed to fetch movie details", err);
-        setLoading(false);
+        if (controller.signal.aborted) return;
+        setLoadError(err.response?.status === 404 ? 'not-found' : 'unavailable');
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
       }
     };
 
-    if (apiKey) fetchDetails();
+    if (!/^\d+$/.test(id)) { setLoadError('not-found'); setLoading(false); }
+    else if (apiKey) fetchDetails();
+    else { setLoadError('unavailable'); setLoading(false); }
+    return () => controller.abort();
   }, [id, apiKey]);
 
-  if (loading) return <div className="loading-screen">Loading Cinema...</div>;
-  if (!movie) return <div className="error-screen">Movie not found.</div>;
+  if (loading) return <><Seo title="Loading Movie | FilmSeeker" description="Loading movie details." /><div className="loading-screen">Loading Cinema...</div></>;
+  if (!movie) return <div className="guide-page" data-page-ready="true"><Seo title={loadError === 'not-found' ? 'Movie Not Found | FilmSeeker' : 'Movie Temporarily Unavailable | FilmSeeker'} description="Explore another movie with FilmSeeker." noindex /><h1>{loadError === 'not-found' ? 'Movie not found.' : 'Movie details are temporarily unavailable.'}</h1><p>{loadError === 'not-found' ? 'Check the link or choose another film.' : 'Please try again shortly.'}</p><Link to="/movie-guides">Explore movie guides</Link></div>;
 
   const year = movie.release_date?.split('-')[0];
   const rawDescription = movie.overview || `${movie.title} (${year}) - Watch on FilmSeeker`;
@@ -58,7 +68,7 @@ const FilmDetail = () => {
     : movie.poster_path
       ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
       : 'https://www.filmseeker.net/logo512.png';
-  const movieUrl = `https://www.filmseeker.net/movie/${id}`;
+  const relatedGuides = guides.filter(guide => guide.picks.some(pick => pick.id === movie.id) || (movie.id === 14684 && guide.slug === 'movies-like-school-ties'));
 
   const trailer = videos.find(v => v.type === "Trailer" && v.site === "YouTube");
   const director = credits?.crew.find(p => p.job === "Director");
@@ -87,25 +97,15 @@ const FilmDetail = () => {
   return (
     <motion.div
       className="film-detail-page"
+      data-page-ready="true"
+      data-movie-id={movie.id}
+      data-runtime={movie.runtime}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
-      <Helmet>
-        <title>{movie.title} ({year}) | FilmSeeker</title>
-        <meta name="description" content={metaDescription} />
-        <link rel="canonical" href={movieUrl} />
-        <meta property="og:type" content="video.movie" />
-        <meta property="og:title" content={`${movie.title} (${year})`} />
-        <meta property="og:description" content={metaDescription} />
-        <meta property="og:image" content={ogImage} />
-        <meta property="og:url" content={movieUrl} />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={`${movie.title} (${year})`} />
-        <meta name="twitter:description" content={metaDescription} />
-        <meta name="twitter:image" content={ogImage} />
-        <meta name="twitter:url" content={movieUrl} />
-      </Helmet>
+      <Seo title={`${movie.title} (${year}) | FilmSeeker`} description={metaDescription} path={`/movie/${id}`} image={ogImage} type="video.movie" />
+      {relatedGuides.length > 0 && <section className="guide-method"><h2>Why watch this film?</h2>{relatedGuides.map(guide => <div key={guide.slug}><p>{guide.picks.find(pick => pick.id === movie.id)?.reason || 'A school drama about conditional acceptance, antisemitism, and the cost of standing up for someone.'}</p><Link to={`/movie-guides/${guide.slug}`}>{guide.title} →</Link></div>)}</section>}
       {/* Hero Backdrop */}
       <div className="detail-hero" style={{ backgroundImage: `url(${backdropUrl})` }}>
         <div className="hero-overlay"></div>
@@ -224,7 +224,7 @@ const FilmDetail = () => {
         {/* Where to Watch */}
         {topProviders.length > 0 && (
           <div className="providers-section">
-            <h3>Where to Watch</h3>
+            <h3>Where to Watch{providers?.region ? ` in ${providers.region}` : ""}</h3>
             <div className="providers-list">
               {topProviders.map(p => (
                 <a

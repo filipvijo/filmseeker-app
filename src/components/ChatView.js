@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Helmet } from 'react-helmet';
 import { useNavigate } from 'react-router-dom';
 import { askDrFilmBot } from '../services/aiService';
 import AIPersonaSelector, { PERSONAS } from './AIPersonaSelector/AIPersonaSelector';
@@ -26,7 +25,7 @@ const ChatView = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
 
-    useEffect(scrollToBottom, [messages]);
+    useEffect(() => { if (messages.length > 1) scrollToBottom(); }, [messages]);
 
     const handleSend = async () => {
         if (!input.trim() || loading || sendingRef.current) return;
@@ -83,22 +82,22 @@ const ChatView = () => {
     };
 
     return (
-        <div className="chat-container">
-            <Helmet>
-                <title>Dr. FilmBot - AI Film Concierge | FilmSeeker</title>
-                <meta name="description" content="Chat with Dr. FilmBot, your AI-powered film concierge. Get personalized movie recommendations through natural conversation." />
-                <link rel="canonical" href="https://www.filmseeker.net/chat" />
-                <meta property="og:title" content="Dr. FilmBot - AI Film Concierge | FilmSeeker" />
-                <meta property="og:description" content="Chat with Dr. FilmBot, your AI-powered film concierge. Get personalized movie recommendations through natural conversation." />
-                <meta property="og:url" content="https://www.filmseeker.net/chat" />
-            </Helmet>
+        <div className="chat-container" data-page-ready="true">
             <div className="chat-hero">
                 <div className="bot-hero-avatar">
                     <img src={drFilmBotImg} alt="Dr. FilmBot" />
                 </div>
-                <h2 className="section-title">AI Film Concierge</h2>
+                <h1 className="section-title">AI movie recommendations with Dr. FilmBot</h1>
             </div>
 
+            <section className="chat-explainer">
+                <p>Tell Dr. FilmBot what you liked, how much time you have, and what you are in the mood for. Use a favorite movie as a starting point, or describe an evening without knowing a single title.</p>
+                <div className="chat-examples" aria-label="Example movie requests">
+                    {['A tense thriller under 90 minutes, without graphic violence', 'Something like School Ties, about belonging and moral courage', 'A funny movie for two people who disagree on genres'].map(prompt => <button type="button" key={prompt} onClick={() => setInput(prompt)}>{prompt}</button>)}
+                </div>
+                <h2>Make the next suggestion more useful</h2>
+                <p>Include a language preference and anything you want to avoid. If a suggestion is too familiar, say what missed the mark. AI suggestions can get details wrong, so check a film’s details and trailer before choosing.</p>
+            </section>
             <AIPersonaSelector
                 selectedId={selectedPersona}
                 onSelect={setSelectedPersona}
@@ -194,12 +193,13 @@ const ChatView = () => {
                 <div className="input-area">
                     <input
                         type="text"
+                        aria-label="Your movie request"
                         placeholder={`Ask ${PERSONAS[selectedPersona].name}...`}
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                     />
-                    <button onClick={handleSend} disabled={loading || !input.trim()}>
+                    <button aria-label="Send movie request" onClick={handleSend} disabled={loading || !input.trim()}>
                         <Send size={20} />
                     </button>
                 </div>
