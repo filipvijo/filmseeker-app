@@ -39,7 +39,18 @@ async function run() {
   fs.writeFileSync(path.join(root, 'movie-shell.html'), shell);
   fs.writeFileSync(path.join(root, 'session-shell.html'), shell.replace('</head>', '<meta data-react-helmet="true" name="robots" content="noindex, follow"></head>'));
   try {
-    browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+    // Vercel's Linux image lacks libraries required by Puppeteer's desktop Chrome.
+    // Use the bundled serverless binary there, keeping desktop Chrome locally.
+    let launchOptions = { headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] };
+    if (process.env.VERCEL && process.platform === 'linux') {
+      const { default: chromium } = await import('@sparticuz/chromium');
+      launchOptions = {
+        args: puppeteer.defaultArgs({ args: chromium.args, headless: 'shell' }),
+        executablePath: await chromium.executablePath(),
+        headless: 'shell'
+      };
+    }
+    browser = await puppeteer.launch(launchOptions);
     for (const route of paths) {
       if (route !== '/' && route !== '/404') {
         const mapping = deploymentRoutes.find(item => item.src && new RegExp(`^${item.src}$`).test(route));
