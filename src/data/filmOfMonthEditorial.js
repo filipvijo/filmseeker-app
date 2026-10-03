@@ -1,4 +1,9 @@
 const editorialByMovieId = {
+  37233: {
+    whyPicked: 'A dream job at a prestigious law firm becomes a trap. Sydney Pollack turns John Grisham\'s legal thriller into a tense story of ambition, loyalty, and the price of success, led by Tom Cruise and Gene Hackman.',
+    bestWatchedWhen: 'You want a patient, twisty legal thriller that lets the pressure build, with time to settle into its web of secrets.',
+    ifYouLiked: ['The Pelican Brief', 'Michael Clayton', 'A Few Good Men']
+  },
   14684: {
     whyPicked: 'A scholarship student wins acceptance at an elite school, then confronts antisemitism when his classmates discover he is Jewish. The drama turns belonging into a test of who will stand beside him.',
     bestWatchedWhen: 'You want a serious character drama about privilege, loyalty, and the cost of fitting in, with room for a conversation afterward.',
